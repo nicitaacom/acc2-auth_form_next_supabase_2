@@ -1,4 +1,6 @@
 {
+  "name": "codesandbox-auth-form-supabase-willbedeleted2",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,7 +12,6 @@
   "dependencies": {
     "@supabase/auth-helpers-nextjs": "latest",
     "@supabase/supabase-js": "latest",
-    "autoprefixer": "10.4.15",
     "next": "latest",
     "postcss": "8.4.29",
     "react": "18.2.0",
@@ -23,8 +24,8 @@
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
-    "autoprefixer": "latest",
     "eslint": "latest",
+    "autoprefixer": "latest",
     "eslint-config-next": "latest",
     "postcss": "latest",
     "prettier": "^3.0.3",
