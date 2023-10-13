@@ -6,6 +6,9 @@ Auth form
 
 Do it here
 
+## Live demo - performance - 99 mobile / 95 desktop
+https://acc2-auth-form-next-supabase-2.vercel.app/
+
 ## Implementation
 
 Implement modal - https://codesandbox.io/p/sandbox/modals-next-solved-jz5cfz
