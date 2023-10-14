@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { Database } from "@/interfaces/types_db";
 
 const supabaseServer = () => {
-  cookies().getAll(); // Keep cookies in the JS execution context for Next.js build
+  cookies().getAll() // Keep cookies in the JS execution context for Next.js build
   return createServerComponentClient<Database>({ cookies });
 };
 
