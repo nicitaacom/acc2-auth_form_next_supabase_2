@@ -1,4 +1,4 @@
-# Usage for modals
+# Usage for modals - how to create new modal
 
 ## Step 1 (in this folder)
 
