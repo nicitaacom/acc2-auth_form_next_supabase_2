@@ -1,10 +1,10 @@
 import supabaseRouteHandler from "@/libs/supabaseRouteHandler"
-import { NextAuthOptions } from "next-auth"
+import { AuthOptions, NextAuthOptions } from "next-auth"
 import NextAuth from "next-auth/next"
 import GoogleProvider from "next-auth/providers/google"
 import TwitterProvider from "next-auth/providers/twitter"
 
-export const authOptions: NextAuthOptions = {
+const authOptions: AuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
@@ -15,7 +15,7 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.TWITTER_CLIENT_SECRET,
     }),
   ],
-
+  secret: process.env.NEXTAUTH_SECRET,
   events: {
     async signIn({ user }) {
       // await supabaseRouteHandler().from("")
@@ -25,4 +25,4 @@ export const authOptions: NextAuthOptions = {
 
 const handler = NextAuth(authOptions)
 
-export { handler as GET, handler as POST }
+export { handler as GET, handler as POST, authOptions }
