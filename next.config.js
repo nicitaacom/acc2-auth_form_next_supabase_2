@@ -1,8 +1,24 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
-  experimental: {
-    serverActions: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "ambgxbbsgequlwnbzchr.supabase.co",
+        port: "",
+      },
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+        port: "",
+      },
+      {
+        protocol: "https",
+        hostname: "pbs.twimg.com",
+        port: "",
+      },
+    ],
   },
 }
 

@@ -1,25 +1,21 @@
-import { Button } from "@/components/ui/Button"
-import Image from "next/image"
-import supabaseClient from "@/utils/supabaseClient"
 import React from "react"
+import Image from "next/image"
+import { signIn } from "next-auth/react"
+
+import supabaseClient from "@/libs/supabaseClient"
+import { Button } from "@/components/ui/Button"
 
 export default function ContinueWithButton({ provider }: { provider: "google" | "faceit" | "twitter" }) {
   async function continueWith(e: React.FormEvent) {
     e.preventDefault()
     if (provider === "google") {
-      const { error } = await supabaseClient.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: `${location.origin}/auth/callback/` },
-      })
-      if (error) throw error
+      const responseGoogle = await signIn("google")
+      console.log(13, "responseGoogle - ", responseGoogle)
     } else if (provider === "faceit") {
       //do stuff
     } else if (provider === "twitter") {
-      const { error } = await supabaseClient.auth.signInWithOAuth({
-        provider: "twitter",
-        options: { redirectTo: `${location.origin}/auth/callback/` },
-      })
-      if (error) throw error
+      const responseTwitter = await signIn("twitter")
+      console.log(13, "responseTwitter - ", responseTwitter)
     }
   }
 
