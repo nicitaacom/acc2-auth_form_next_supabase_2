@@ -7,24 +7,29 @@ Auth form
 Do it here
 
 ## Live demo - performance - 99 mobile / 95 desktop
+
 https://acc2-auth-form-next-supabase-2.vercel.app/
 
 ## Codesandbox
+
 link should be here
 
 ## Github
+
 link should be here
 
 ## Usage
 
 use supabaseServer like this (to prevent build error - https://github.com/vercel/next.js/issues/56630)
+
 ```tsx
- const user = await supabaseServer().auth.getUser()
+const user = await supabaseServer().auth.getUser()
 ```
 
 ## Implementation
 
 ### Step 1 - implement button modal and input
+
 Implement button - https://codesandbox.io/p/sandbox/button-as-universal-component-jyfyg4
 Implement modal - https://codesandbox.io/p/sandbox/modals-next-solved-jz5cfz
 Implement input-validation-react-hook-form - https://codesandbox.io/p/sandbox/input-validation-react-hook-form-solved-ndklv3
@@ -34,5 +39,15 @@ Implement input-validation-react-hook-form - https://codesandbox.io/p/sandbox/in
 ### Step 3 - copy paste Checkbox.tsx and styles for it
 
 ## Step 4 - copy paste AuthModal.tsx and FormInput.tsx
+
 And adjust imports for Button.tsx Checkbox.tsx and ModalContainer.tsx
 That's it - if you implemented modal you already have button to open your auth modal
+
+Step-by-Step Guide: Next.js 13 Authentication using NextAuth.js, GitHub Sign-In & Tailwind CSS
+
+## This guide bad because:
+
+1. I got error in libs/provider.ts
+   https://youtu.be/y-r7hKhxUKw?list=TLPQMTMxMTIwMjNGkfqJTqM-fA&t=1031
+2. Because he use javascript
+3. He use white background that is pain for my eyes
