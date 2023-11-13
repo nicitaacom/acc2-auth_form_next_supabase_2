@@ -1,6 +1,6 @@
 import { OpenAuthModalButton, UserIcon } from "./components"
 import { useSession } from "next-auth/react"
-import { authOptions } from "@/api/auth/[...nextauth]/route"
+import authOptions from "@/../authOptions"
 import { getServerSession } from "next-auth"
 
 export default async function Navbar() {
