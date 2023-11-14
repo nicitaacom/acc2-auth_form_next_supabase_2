@@ -13,6 +13,7 @@
     "@supabase/auth-helpers-nextjs": "latest",
     "@supabase/supabase-js": "latest",
     "class-variance-authority": "^0.7.0",
+    "disposable-email-domains": "^1.0.62",
     "framer-motion": "^10.16.4",
     "next": "^14.0.2",
     "next-auth": "^4.24.5",
