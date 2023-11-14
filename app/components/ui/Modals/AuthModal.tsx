@@ -136,7 +136,10 @@ export function AuthModal({ label }: AdminModalProps) {
         password: password,
       } as TAPIRegister)
 
-      if (signUpResponse.data.error.includes("It seems like you use temp-mail")) {
+      if (
+        signUpResponse.data.error ===
+        "It seems like you use temp-mail - please use actuall email\n\n    So you can recover your password and get access to support"
+      ) {
         throw new Error(signUpResponse.data.error)
       }
 
