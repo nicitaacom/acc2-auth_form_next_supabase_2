@@ -12,6 +12,7 @@
   "dependencies": {
     "@supabase/auth-helpers-nextjs": "latest",
     "@supabase/supabase-js": "latest",
+    "axios": "^1.6.1",
     "class-variance-authority": "^0.7.0",
     "framer-motion": "^10.16.4",
     "next": "^14.0.2",

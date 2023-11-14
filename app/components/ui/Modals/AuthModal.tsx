@@ -4,9 +4,11 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { usePathname, useSearchParams } from "next/navigation"
 
+import { TAPIRegister } from "@/api/auth/register/route"
 import { useForm } from "react-hook-form"
 import { AiOutlineUser, AiOutlineMail, AiOutlineLock } from "react-icons/ai"
 import supabaseClient from "@/libs/supabaseClient"
+import axios from "axios"
 
 import { FormInput } from "../Inputs/Validation/FormInput"
 import ContinueWithButton from "@/(auth)/components/ContinueWithButton"
@@ -73,12 +75,12 @@ export function AuthModal({ label }: AdminModalProps) {
           console.error("Login with email - ", error)
         } else {
           displayResponseMessage(
-            <p className="text-danger">
-              An unknown error occurred - contact admin
-              <Button href="https://t.me/nicitaacom" variant="link">
+            <div className="text-danger flex flex-row">
+              <p>An unknown error occurred - contact admin&nbsp;</p>
+              <Button className="text-info" href="https://t.me/nicitaacom" variant="link">
                 here
               </Button>
-            </p>,
+            </div>,
           )
           console.error("Unknown error - ", error)
         }
@@ -112,12 +114,12 @@ export function AuthModal({ label }: AdminModalProps) {
           console.error("Login with email - ", error)
         } else {
           displayResponseMessage(
-            <p className="text-danger">
-              An unknown error occurred - contact admin
-              <Button href="https://t.me/nicitaacom" variant="link">
+            <div className="text-danger flex flex-row">
+              <p>An unknown error occurred - contact admin&nbsp;</p>
+              <Button className="text-info" href="https://t.me/nicitaacom" variant="link">
                 here
               </Button>
-            </p>,
+            </div>,
           )
           console.error("Unknown error - ", error)
         }
@@ -127,51 +129,37 @@ export function AuthModal({ label }: AdminModalProps) {
 
   async function signUp(username: string, email: string, password: string) {
     try {
-      const { data: user, error: signUpError } = await supabaseClient.auth.signUp({
+      const signUpResponse = await axios.post("/api/register", {
+        username: username,
         email: email,
         password: password,
-        options: { emailRedirectTo: `${location.origin}/auth/callback` },
-      })
-      if (signUpError) throw signUpError
-      if (user.user) {
-        //any necessary actions in database (e.g insert row in users table and in users_cart table)
-        /* Boilerplate 
-        const { error: errorUsersInsert } = await supabase
-          .from("users")
-          .insert({ id: response.data.user.id, username: username, email: email })
-        if (errorUsersInsert) throw errorUsersInsert
-        const { error: errorUsersCartInsert } = await supabase.from("users_cart").insert({ id: response.data.user.id })
-        if (errorUsersCartInsert) throw errorUsersCartInsert
-        */
-        //ohter actions like save into in LocalStorage with zustand
-        // (to don't do request to db every time we need user info or not use regular localstorage)
-        //displayResponse message
-        setResponseMessage(<p className="text-success">Check your email</p>)
-        setTimeout(() => {
-          setResponseMessage(
-            <div className="flex flex-row">
-              Don&apos;t revice email?&nbsp;
-              <Timer label="resend in" seconds={60}>
-                <Button type="button" variant="link" onClick={() => resendVerificationEmail(email)}>
-                  resend
-                </Button>
-              </Timer>
-            </div>,
-          )
-        }, 5000)
-      }
+      } as TAPIRegister)
+      console.log(132, "signUpResponse - ", signUpResponse)
+      setResponseMessage(<p className="text-success">Check your email</p>)
+      setTimeout(() => {
+        setResponseMessage(
+          <div className="flex flex-row">
+            Don&apos;t revice email?&nbsp;
+            <Timer label="resend in" seconds={60}>
+              <Button type="button" variant="link" onClick={() => resendVerificationEmail(email)}>
+                resend
+              </Button>
+            </Timer>
+          </div>,
+        )
+      }, 5000)
     } catch (error) {
       if (error instanceof Error) {
         displayResponseMessage(<p className="text-danger">{error.message}</p>)
-        console.error("Login with email - ", error)
+        console.error("Login with email - ", error.message)
       } else {
         displayResponseMessage(
-          <p className="text-danger">
-            An unknown error occurred - contact admin
-            <Button href="https://t.me/nicitaacom" variant="link">
+          <div className="text-danger flex flex-row">
+            <p>An unknown error occurred - contact admin&nbsp;</p>
+            <Button className="text-info" href="https://t.me/nicitaacom" variant="link">
               here
             </Button>
-          </p>,
+          </div>,
         )
         console.error("Unknown error - ", error)
       }
@@ -192,12 +180,12 @@ export function AuthModal({ label }: AdminModalProps) {
         console.error("Login with email - ", error)
       } else {
         displayResponseMessage(
-          <p className="text-danger">
-            An unknown error occurred - contact admin
-            <Button href="https://t.me/nicitaacom" variant="link">
+          <div className="text-danger flex flex-row">
+            <p>An unknown error occurred - contact admin&nbsp;</p>
+            <Button className="text-info" href="https://t.me/nicitaacom" variant="link">
               here
             </Button>
-          </p>,
+          </div>,
         )
         console.error("Unknown error - ", error)
       }
@@ -217,12 +205,12 @@ export function AuthModal({ label }: AdminModalProps) {
         console.error("Login with email - ", error)
       } else {
         displayResponseMessage(
-          <p className="text-danger">
-            An unknown error occurred - contact admin
-            <Button href="https://t.me/nicitaacom" variant="link">
+          <div className="text-danger flex flex-row">
+            <p>An unknown error occurred - contact admin&nbsp;</p>
+            <Button className="text-info" href="https://t.me/nicitaacom" variant="link">
               here
             </Button>
-          </p>,
+          </div>,
         )
         console.error("Unknown error - ", error)
       }
@@ -245,12 +233,12 @@ export function AuthModal({ label }: AdminModalProps) {
         console.error("Login with email - ", error)
       } else {
         displayResponseMessage(
-          <p className="text-danger">
-            An unknown error occurred - contact admin
-            <Button href="https://t.me/nicitaacom" variant="link">
+          <div className="text-danger flex flex-row">
+            <p>An unknown error occurred - contact admin&nbsp;</p>
+            <Button className="text-info" href="https://t.me/nicitaacom" variant="link">
               here
             </Button>
-          </p>,
+          </div>,
         )
         console.error("Unknown error - ", error)
       }
