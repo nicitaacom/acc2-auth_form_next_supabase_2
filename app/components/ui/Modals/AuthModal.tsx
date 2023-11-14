@@ -136,8 +136,6 @@ export function AuthModal({ label }: AdminModalProps) {
         password: password,
       } as TAPIRegister)
 
-      console.log(138, "signUpResponse.data - ", signUpResponse.data)
-
       if (signUpResponse.data.error.includes("It seems like you use temp-mail")) {
         throw new Error(signUpResponse.data.error)
       }
@@ -159,7 +157,7 @@ export function AuthModal({ label }: AdminModalProps) {
     } catch (error) {
       if (error instanceof Error) {
         displayResponseMessage(<p className="text-danger">{error.message}</p>)
-        console.error("Register with email - ", error.message)
+        console.error("Login with email - ", error.message)
         throw new Error(error.message)
       } else {
         displayResponseMessage(

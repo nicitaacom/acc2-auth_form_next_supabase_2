@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.log(38, `api/auth/register\n ${error}`)
     if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
+      return NextResponse.json({ error: error.message })
     }
   }
   // check if user exists - throw error
