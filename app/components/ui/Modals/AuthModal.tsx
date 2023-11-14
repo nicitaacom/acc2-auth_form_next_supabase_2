@@ -161,7 +161,6 @@ export function AuthModal({ label }: AdminModalProps) {
       if (error instanceof Error) {
         displayResponseMessage(<p className="text-danger">{error.message}</p>)
         console.error("Login with email - ", error.message)
-        throw new Error(error.message)
       } else {
         displayResponseMessage(
           <div className="text-danger flex flex-row">
