@@ -15,6 +15,10 @@ declare global {
 
       TWITTER_CLIENT_ID: string
       TWITTER_CLIENT_SECRET: string
+
+      PUSHER_APP_ID: string
+      NEXT_PUBLIC_PUSHER_APP_KEY: string
+      PUSHER_SECRET: string
     }
   }
 }
