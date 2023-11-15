@@ -1,6 +1,6 @@
 "use client"
 import Image from "next/image"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { usePathname, useSearchParams } from "next/navigation"
 
@@ -10,10 +10,11 @@ import { AiOutlineUser, AiOutlineMail, AiOutlineLock } from "react-icons/ai"
 import supabaseClient from "@/libs/supabaseClient"
 import axios from "axios"
 
-import { FormInput } from "../Inputs/Validation/FormInput"
+import FormInput from "../Inputs/Validation/FormInput"
 import ContinueWithButton from "@/(auth)/components/ContinueWithButton"
 import { Button, Checkbox, ModalContainer } from ".."
 import { Timer } from "@/(auth)/components"
+import { twMerge } from "tailwind-merge"
 
 //TODO - its trash code - reduce line amount of line
 
@@ -31,6 +32,7 @@ interface FormData {
 export function AuthModal({ label }: AdminModalProps) {
   const router = useRouter()
 
+  const emailInputRef = useRef<HTMLInputElement>(null)
   const pathname = usePathname()
   const queryParams = useSearchParams().get("variant")
   const [isChecked, setIsChecked] = useState(false)
@@ -47,6 +49,11 @@ export function AuthModal({ label }: AdminModalProps) {
     formState: { errors, isSubmitting },
     reset,
   } = useForm<FormData>()
+
+  const { ref, ...restEmail } = register("email")
+  const { ...restemailOrUsername } = register("emailOrUsername")
+  const { ...restPassword } = register("password")
+  const { ...restUsername } = register("username")
 
   //when user submit form and got response message from server
   function displayResponseMessage(message: React.ReactNode) {
@@ -95,7 +102,7 @@ export function AuthModal({ label }: AdminModalProps) {
         if (emailSelectError) throw emailSelectError
         if (email && email.length > 0) {
           const { data: user, error: signInError } = await supabaseClient.auth.signInWithPassword({
-            email: email[0].email!, //email 100% !== null because email && email.length >0 (thats why I use !)
+            email: email[0].email,
             password: password,
           })
           if (signInError) throw signInError
@@ -130,11 +137,16 @@ export function AuthModal({ label }: AdminModalProps) {
 
   async function signUp(username: string, email: string, password: string) {
     try {
-      const signUpResponse = await axios.post("/api/auth/register", {
-        username: username,
-        email: email,
-        password: password,
-      } as TAPIRegister)
+      const signUpResponse = await axios
+        .post("/api/auth/register", {
+          username: username,
+          email: email,
+          password: password,
+        } as TAPIRegister)
+        .catch(error => {
+          console.log(147, "error", error.response.data.error)
+          throw new Error(error.response.data.error)
+        })
 
       if (
         signUpResponse.data.error ===
@@ -159,8 +171,17 @@ export function AuthModal({ label }: AdminModalProps) {
       }, 5000)
     } catch (error) {
       if (error instanceof Error) {
-        displayResponseMessage(<p className="text-danger">{error.message}</p>)
-        console.error("Login with email - ", error.message)
+        if (error.message === "User exists - check your email\n You might not verified your email") {
+          displayResponseMessage(
+            <p className="text-danger">
+              User exists - check your email
+              <br />
+              You might not verified your email
+            </p>,
+          )
+        } else {
+          displayResponseMessage(<p className="text-danger">{error.message}</p>)
+        }
       } else {
         displayResponseMessage(
           <div className="text-danger flex flex-row">
@@ -184,7 +205,21 @@ export function AuthModal({ label }: AdminModalProps) {
       if (error) throw error
       displayResponseMessage(
         <div className="flex flex-col">
-          <p className="text-success">Message resended</p>
+          <div className="text-success flex flex-row justify-center">
+            <p>Email resended -&nbsp;</p>
+            <Button
+              className="text-brand"
+              variant="link"
+              type="button"
+              onClick={() => {
+                setIsEmailSent(false)
+                setTimeout(() => {
+                  emailInputRef.current?.focus()
+                }, 50)
+              }}>
+              change email
+            </Button>
+          </div>
           <p>If you don&apos;t recieve an email - check &apos;Spam&apos; and &apos;All mail&apos;</p>
         </div>,
       )
@@ -307,18 +342,25 @@ transition-all duration-500`}
               onSubmit={handleSubmit(onSubmit)}>
               {queryParams !== "login" && queryParams !== "reset-password" && (
                 <FormInput
+                  {...restEmail}
                   endIcon={<AiOutlineMail size={24} />}
                   register={register}
                   errors={errors}
                   id="email"
                   label="Email"
                   placeholder="user@big.com"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isEmailSent}
+                  ref={e => {
+                    ref(e)
+                    //@ts-ignore
+                    emailInputRef.current = e // you can still assign to ref
+                  }}
                   required
                 />
               )}
               {queryParams === "login" && (
                 <FormInput
+                  {...restemailOrUsername}
                   endIcon={<AiOutlineUser size={24} />}
                   register={register}
                   errors={errors}
@@ -331,6 +373,7 @@ transition-all duration-500`}
               )}
               {queryParams !== "recover" && (
                 <FormInput
+                  {...restPassword}
                   endIcon={<AiOutlineLock size={24} />}
                   register={register}
                   errors={errors}
@@ -338,19 +381,20 @@ transition-all duration-500`}
                   label="Password"
                   type="password"
                   placeholder={queryParams === "reset-password" ? "NeW-RaNd0m_PasWorD" : "RaNd0m_PasWorD"}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isEmailSent}
                   required
                 />
               )}
               {queryParams === "register" && (
                 <FormInput
+                  {...restUsername}
                   endIcon={<AiOutlineUser size={24} />}
                   register={register}
                   errors={errors}
                   id="username"
                   label="Username"
                   placeholder="HANTARESpeek"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isEmailSent}
                   required
                 />
               )}
@@ -400,9 +444,10 @@ transition-all duration-500`}
                   <ContinueWithButton provider="twitter" />
                 </div>
                 <Button
-                  className="pr-1"
+                  className={twMerge(`pr-1`, isEmailSent && "opacity-50 pointer-events-none cursor-default")}
                   href={`${pathname}?modal=AuthModal&variant=${queryParams === "login" ? "register" : "login"}`}
-                  variant="link">
+                  variant="link"
+                  disabled={isEmailSent}>
                   {queryParams === "login" ? "Create account" : "Login"}
                 </Button>
               </section>

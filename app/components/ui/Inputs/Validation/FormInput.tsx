@@ -1,3 +1,4 @@
+import React, { forwardRef, ChangeEvent } from "react"
 import { FieldErrors, UseFormRegister } from "react-hook-form"
 
 interface FormData {
@@ -30,20 +31,10 @@ interface ValidationRules {
     }
   }
 }
+const FormInput = forwardRef<HTMLInputElement, FormInputProps>((props, ref) => {
+  const { id, className, label, type, startIcon, endIcon, placeholder, register, errors, required, disabled, ...rest } =
+    props
 
-export function FormInput({
-  className = "",
-  label,
-  id,
-  type,
-  startIcon,
-  endIcon,
-  placeholder,
-  required,
-  register,
-  errors,
-  disabled,
-}: FormInputProps) {
   const validationRules: ValidationRules = {
     username: {
       required: "This field is required",
@@ -105,6 +96,8 @@ export function FormInput({
                 message: patternMessage,
               },
             })}
+            ref={ref}
+            {...rest}
           />
           <div className="absolute right-2 translate-y-[35%] text-icon-color">{endIcon}</div>
           {errors[id] && errors[id]?.message && (
@@ -114,4 +107,7 @@ export function FormInput({
       </label>
     </div>
   )
-}
+})
+FormInput.displayName = "FormInput"
+
+export default FormInput

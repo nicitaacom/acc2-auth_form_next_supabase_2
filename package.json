@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "update-types": "pnpx supabase gen types typescript --project-id ambgxbbsgequlwnbzchr > types_db.ts"
+    "update-types": "pnpx supabase gen types typescript --project-id mqfqrmtgylrsynrxrsxl > app/interfaces/types_db.ts"
   },
   "dependencies": {
     "@supabase/auth-helpers-nextjs": "latest",
