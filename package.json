@@ -17,7 +17,6 @@
     "disposable-email-domains": "^1.0.62",
     "framer-motion": "^10.16.4",
     "next": "^14.0.2",
-    "next-auth": "^4.24.5",
     "pusher": "^5.2.0",
     "pusher-js": "^8.3.0",
     "react": "latest",

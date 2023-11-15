@@ -1,6 +1,5 @@
 import React from "react"
 import Image from "next/image"
-import { signIn } from "next-auth/react"
 
 import supabaseClient from "@/libs/supabaseClient"
 import { Button } from "@/components/ui/Button"
@@ -9,13 +8,19 @@ export default function ContinueWithButton({ provider }: { provider: "google" | 
   async function continueWith(e: React.FormEvent) {
     e.preventDefault()
     if (provider === "google") {
-      const responseGoogle = await signIn("google")
-      console.log(13, "responseGoogle - ", responseGoogle)
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${location.origin}/auth/callback/smth` },
+      })
+      if (error) throw error
     } else if (provider === "faceit") {
       //do stuff
     } else if (provider === "twitter") {
-      const responseTwitter = await signIn("twitter")
-      console.log(13, "responseTwitter - ", responseTwitter)
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: "twitter",
+        options: { redirectTo: `${location.origin}/auth/callback/smth` },
+      })
+      if (error) throw error
     }
   }
 

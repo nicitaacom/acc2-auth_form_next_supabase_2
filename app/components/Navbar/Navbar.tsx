@@ -1,15 +1,13 @@
+import supabaseServer from "@/libs/supabaseServer"
 import { OpenAuthModalButton, UserIcon } from "./components"
-import { useSession } from "next-auth/react"
-import authOptions from "@/../authOptions"
-import { getServerSession } from "next-auth"
 
 export default async function Navbar() {
-  const session = await getServerSession(authOptions)
+  const { data, error } = await supabaseServer().from("users").select().single()
 
   return (
     <nav className="px-8 py-4 flex justify-between items-center gap-x-4">
       <OpenAuthModalButton />
-      <UserIcon user={session?.user} />
+      <UserIcon user={data} />
     </nav>
   )
 }
