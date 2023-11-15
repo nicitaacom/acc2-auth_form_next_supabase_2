@@ -74,7 +74,6 @@ export function AuthModal({ label }: AdminModalProps) {
 
     pusherClient.bind("auth:completed", authCompletedHandler)
     return () => {
-      console.log(77, "emailInputRef.current?.value - ", emailInputRef.current?.value)
       if (emailInputRef.current?.value) {
         pusherClient.unsubscribe(emailInputRef.current?.value)
       }
@@ -102,7 +101,6 @@ export function AuthModal({ label }: AdminModalProps) {
       } catch (error: unknown) {
         if (error instanceof Error) {
           displayResponseMessage(<p className="text-danger">{error.message}</p>)
-          console.error("Login with email - ", error)
         } else {
           displayResponseMessage(
             <div className="text-danger flex flex-row">
@@ -112,7 +110,6 @@ export function AuthModal({ label }: AdminModalProps) {
               </Button>
             </div>,
           )
-          console.error("Unknown error - ", error)
         }
       }
     } else {
@@ -141,7 +138,6 @@ export function AuthModal({ label }: AdminModalProps) {
       } catch (error) {
         if (error instanceof Error) {
           displayResponseMessage(<p className="text-danger">{error.message}</p>)
-          console.error("Login with email - ", error)
         } else {
           displayResponseMessage(
             <div className="text-danger flex flex-row">
@@ -151,7 +147,6 @@ export function AuthModal({ label }: AdminModalProps) {
               </Button>
             </div>,
           )
-          console.error("Unknown error - ", error)
         }
       }
     }
@@ -166,7 +161,6 @@ export function AuthModal({ label }: AdminModalProps) {
           password: password,
         } as TAPIRegister)
         .catch(error => {
-          console.log(147, "error", error.response.data.error)
           throw new Error(error.response.data.error)
         })
 
@@ -179,7 +173,6 @@ export function AuthModal({ label }: AdminModalProps) {
 
       setIsEmailSent(true)
       if (emailInputRef.current) {
-        console.log(184, "pusher subscribe to - emailInputRef.current?.value -", emailInputRef.current?.value)
         pusherClient.subscribe(emailInputRef.current?.value)
       }
       setResponseMessage(<p className="text-success">Check your email</p>)
@@ -217,7 +210,6 @@ export function AuthModal({ label }: AdminModalProps) {
             </Button>
           </div>,
         )
-        console.error("Unknown error - ", error)
       }
     }
   }
@@ -252,7 +244,6 @@ export function AuthModal({ label }: AdminModalProps) {
     } catch (error) {
       if (error instanceof Error) {
         displayResponseMessage(<p className="text-danger">{error.message}</p>)
-        console.error("Login with email - ", error.message)
       } else {
         displayResponseMessage(
           <div className="text-danger flex flex-row">
@@ -262,7 +253,6 @@ export function AuthModal({ label }: AdminModalProps) {
             </Button>
           </div>,
         )
-        console.error("Unknown error - ", error)
       }
     }
   }
@@ -277,7 +267,6 @@ export function AuthModal({ label }: AdminModalProps) {
     } catch (error) {
       if (error instanceof Error) {
         displayResponseMessage(<p className="text-danger">{error.message}</p>)
-        console.error("Login with email - ", error)
       } else {
         displayResponseMessage(
           <div className="text-danger flex flex-row">
@@ -287,7 +276,6 @@ export function AuthModal({ label }: AdminModalProps) {
             </Button>
           </div>,
         )
-        console.error("Unknown error - ", error)
       }
     }
   }
@@ -302,10 +290,8 @@ export function AuthModal({ label }: AdminModalProps) {
     } catch (error) {
       if (error instanceof Error && error.message === "New password should be different from the old password.") {
         displayResponseMessage(<p className="text-danger">Its already your password - enter new one</p>)
-        console.error("Login with email - ", error)
       } else if (error instanceof Error) {
         displayResponseMessage(<p className="text-danger">{error.message}</p>)
-        console.error("Login with email - ", error)
       } else {
         displayResponseMessage(
           <div className="text-danger flex flex-row">
@@ -315,7 +301,6 @@ export function AuthModal({ label }: AdminModalProps) {
             </Button>
           </div>,
         )
-        console.error("Unknown error - ", error)
       }
     }
   }
