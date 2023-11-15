@@ -22,8 +22,11 @@ export default function Error() {
   if (error === "Email link is invalid or has expired") {
     return <EmailLinkInvalidOrExpired />
   }
-  if (error_description === "No user found after exchanging cookies") {
-    return <ExchangeCookiesError />
+  if (error_description === "No user found after exchanging cookies for registration") {
+    return <ExchangeCookiesError message="No user found after exchanging cookies for registration" />
+  }
+  if (error_description === "No user found after exchanging cookies for recovering") {
+    return <ExchangeCookiesError message="No user found after exchanging cookies for recovering" />
   }
   if (error_description === "You have no access to this route - your auth not completed") {
     return <AuthNotCompleted />

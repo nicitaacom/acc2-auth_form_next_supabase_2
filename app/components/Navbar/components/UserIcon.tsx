@@ -17,7 +17,6 @@ interface UserIconProps {
 }
 
 export default function UserIcon({ user }: UserIconProps) {
-  console.log("user - ", user)
   return (
     <div className="flex flex-col gap-y-2 justify-center items-center">
       {user ? (

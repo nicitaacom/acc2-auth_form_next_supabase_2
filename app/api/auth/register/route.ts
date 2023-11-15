@@ -7,14 +7,14 @@ import supabaseAdmin from "@/libs/supabaseAdmin"
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
 
-export type TAPIRegister = {
+export type TAPIAuthRegister = {
   username: string
   email: string
   password: string
 }
 
 export async function POST(req: Request) {
-  const { username, email, password }: TAPIRegister = await req.json()
+  const { username, email, password }: TAPIAuthRegister = await req.json()
   const supabase = createRouteHandlerClient({ cookies })
 
   //basic check for temp-emails

@@ -4,18 +4,21 @@ import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { usePathname, useSearchParams } from "next/navigation"
 
-import { TAPIRegister } from "@/api/auth/register/route"
+import { TAPIAuthRegister } from "@/api/auth/register/route"
 import { useForm } from "react-hook-form"
 import { AiOutlineUser, AiOutlineMail, AiOutlineLock } from "react-icons/ai"
 import supabaseClient from "@/libs/supabaseClient"
 import axios from "axios"
 
-import FormInput from "../Inputs/Validation/FormInput"
+import FormInput from "../../components/ui/Inputs/Validation/FormInput"
 import ContinueWithButton from "@/(auth)/components/ContinueWithButton"
-import { Button, Checkbox, ModalContainer } from ".."
+import { Button, Checkbox, ModalContainer } from "../../components/ui"
 import { Timer } from "@/(auth)/components"
 import { twMerge } from "tailwind-merge"
 import { pusherClient } from "@/libs/pusher"
+import { TAPIAuthLogin } from "@/api/auth/login/route"
+import { getCookie } from "@/utils/helpersCSR"
+import { TAPIAuthRecover } from "../../api/auth/recover/route"
 
 //TODO - its trash code - reduce line amount of line
 
@@ -39,6 +42,7 @@ export function AuthModal({ label }: AdminModalProps) {
   const [isChecked, setIsChecked] = useState(false)
   const [isEmailSent, setIsEmailSent] = useState(false)
   const [isAuthCompleted, setIsAuthCompleted] = useState(false)
+  const [isRecoverCompleted, setIsRecoverCompleted] = useState(false)
   const [responseMessage, setResponseMessage] = useState<React.ReactNode>(<p></p>)
   //for case when user click 'Forgot password?' or 'Create account' and some data in responseMessage
   useEffect(() => {
@@ -50,6 +54,7 @@ export function AuthModal({ label }: AdminModalProps) {
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
+    trigger,
   } = useForm<FormData>()
 
   const { ref, ...restEmail } = register("email")
@@ -67,6 +72,7 @@ export function AuthModal({ label }: AdminModalProps) {
     // else router.push("?modal=AuthModal&variant=login")
   }, [isAuthCompleted, router])
 
+  // Show 'Auth completed' message if user verified email
   useEffect(() => {
     function authCompletedHandler() {
       setIsAuthCompleted(true)
@@ -80,6 +86,25 @@ export function AuthModal({ label }: AdminModalProps) {
       pusherClient.unbind("auth:completed", authCompletedHandler)
     }
   }, [])
+
+  // Show 'Recover completed' if user changed password in another window
+  useEffect(() => {
+    if (isRecoverCompleted) router.push("?modal=AuthModal&variant=recoverCompleted")
+
+    console.log(93, "emailInputRef.current?.value - ", emailInputRef.current?.value)
+    function recoverCompletedHandler() {
+      setIsRecoverCompleted(true)
+      console.log(96, "pusher subscribe isRecoverCompleted - ", isRecoverCompleted)
+    }
+    pusherClient.bind("recover:completed", recoverCompletedHandler)
+    return () => {
+      if (emailInputRef.current?.value) {
+        console.log(101, "pusher unsubscribe value - ", emailInputRef.current?.value)
+        pusherClient.unsubscribe(emailInputRef.current?.value)
+      }
+      pusherClient.unbind("recover:completed", recoverCompletedHandler)
+    }
+  }, [isRecoverCompleted, router])
 
   async function signInWithPassword(emailOrUsername: string, password: string) {
     //Check user wants login with email or username
@@ -117,16 +142,18 @@ export function AuthModal({ label }: AdminModalProps) {
       }
     } else {
       try {
-        const { data: email, error: emailSelectError } = await supabaseClient
-          .from("users")
-          .select("email")
-          .eq("username", emailOrUsername)
-        if (emailSelectError) throw emailSelectError
-        if (email && email.length > 0) {
+        const response = await axios
+          .post("/api/auth/login", { username: emailOrUsername } as TAPIAuthLogin)
+          .catch(error => {
+            throw new Error(error.response.data.error)
+          })
+
+        if (response.data.email) {
           const { data: user, error: signInError } = await supabaseClient.auth.signInWithPassword({
-            email: email[0].email,
+            email: response.data.email,
             password: password,
           })
+
           if (signInError) throw signInError
 
           if (user.user) {
@@ -140,7 +167,11 @@ export function AuthModal({ label }: AdminModalProps) {
         }
       } catch (error) {
         if (error instanceof Error) {
-          displayResponseMessage(<p className="text-danger">{error.message}</p>)
+          if (error.message === "Invalid login credentials") {
+            displayResponseMessage(<p className="text-danger">Wrong email or password</p>)
+          } else {
+            displayResponseMessage(<p className="text-danger">{error.message}</p>)
+          }
         } else {
           displayResponseMessage(
             <div className="text-danger flex flex-row">
@@ -162,7 +193,7 @@ export function AuthModal({ label }: AdminModalProps) {
           username: username,
           email: email,
           password: password,
-        } as TAPIRegister)
+        } as TAPIAuthRegister)
         .catch(error => {
           throw new Error(error.response.data.error)
         })
@@ -235,7 +266,7 @@ export function AuthModal({ label }: AdminModalProps) {
               onClick={() => {
                 setIsEmailSent(false)
                 setTimeout(() => {
-                  emailInputRef.current?.focus()
+                  trigger("email", { shouldFocus: true })
                 }, 50)
               }}>
               change email
@@ -263,9 +294,13 @@ export function AuthModal({ label }: AdminModalProps) {
   async function recoverPassword(email: string) {
     try {
       const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-        redirectTo: `${location.origin}/?modal=AuthModal&variant=reset-password`,
+        redirectTo: `${location.origin}/auth/recover`,
       })
       if (error) throw error
+      if (emailInputRef.current) {
+        console.log(298, "pusherClient.subscribe(emailInputRef.current?.value) - ", emailInputRef.current?.value)
+        pusherClient.subscribe(emailInputRef.current?.value)
+      }
       displayResponseMessage(<p className="text-success">Check your email</p>)
     } catch (error) {
       if (error instanceof Error) {
@@ -285,11 +320,26 @@ export function AuthModal({ label }: AdminModalProps) {
 
   async function resetPassword(password: string) {
     try {
-      //TODO - check if this password already belong to current email
-      const { error } = await supabaseClient.auth.updateUser({ password: password })
-      if (error) throw error
-      displayResponseMessage(<p className="text-success">Your password changed</p>)
-      router.push("/")
+      // IMP - check in closed databases for this password (enterprice)
+      const response = await axios
+        .post("api/auth/recover", {
+          email: getCookie("email"),
+          password: password,
+        } as TAPIAuthRecover)
+        .catch(error => {
+          throw error
+        })
+
+      displayResponseMessage(
+        <div className="text-success flex flex-col justify-center items-center">
+          Your password changed - you may close this window
+          <Timer label="I close this modal in" seconds={7} />
+        </div>,
+      )
+
+      setTimeout(() => {
+        router.replace("/")
+      }, 7000)
     } catch (error) {
       if (error instanceof Error && error.message === "New password should be different from the old password.") {
         displayResponseMessage(<p className="text-danger">Its already your password - enter new one</p>)
@@ -309,41 +359,41 @@ export function AuthModal({ label }: AdminModalProps) {
   }
 
   const onSubmit = async (data: FormData) => {
-    await new Promise(resolve => setTimeout(resolve, 1000))
     if (queryParams === "login") {
-      signInWithPassword(data.emailOrUsername, data.password)
+      await signInWithPassword(data.emailOrUsername, data.password)
     } else if (queryParams === "register") {
-      signUp(data.username, data.email, data.password)
-      // reset()
+      await signUp(data.username, data.email, data.password)
+      reset()
     } else if (queryParams === "recover") {
-      recoverPassword(data.email)
-      // reset()
-    } else {
+      router.refresh()
+      await recoverPassword(data.email)
+      reset()
+    } else if (queryParams === "resetPassword") {
       resetPassword(data.password)
     }
   }
 
   return (
     <ModalContainer
-      className={`w-[500px] 
-    ${queryParams === "login" ? "h-[550px]" : queryParams === "register" ? "h-[625px]" : "h-[325px]"}
-${
-  //for login height when errors
-  queryParams === "login" && (errors.emailOrUsername || errors.password) && "!h-[610px]"
-}
-${
-  //for register height when errors
-  queryParams === "register" && (errors.email || errors.password) && "!h-[720px]"
-} 
-${
-  //for reset-password height when errors
-  queryParams === "recover" && errors.password && "!h-[350px]"
-}
-${
-  //for reset-password height when errors
-  queryParams === "authCompleted" && "!h-[250px]"
-}
-transition-all duration-500`}
+      className={twMerge(
+        `w-[500px] transition-all duration-500`,
+        queryParams === "login" ? "h-[550px]" : queryParams === "register" ? "h-[625px]" : "h-[325px]",
+
+        //for login height when errors
+        queryParams === "login" && (errors.emailOrUsername || errors.password) && "!h-[610px]",
+
+        //for register height when errors
+        queryParams === "register" && (errors.email || errors.password) && "!h-[720px]",
+
+        //for recover height when errors
+        queryParams === "recover" && errors.password && "!h-[350px]",
+
+        //for recover height when errors
+        queryParams === "resetPassword" && errors.password && "!h-[370px]",
+
+        //for auth completed height
+        queryParams === "authCompleted" && "!h-[250px]",
+      )}
       modalQuery="AuthModal">
       <div className="flex flex-col justify-center gap-y-2 w-[90%] mx-auto">
         <div className="flex flex-row gap-x-4 items-center h-[100px]">
@@ -355,16 +405,21 @@ transition-all duration-500`}
               ? "Register"
               : queryParams === "recover"
               ? "Recover"
+              : queryParams === "resetPassword"
+              ? "Reset pasword"
               : "Auth completed"}
           </h1>
         </div>
 
-        {queryParams === "login" || queryParams === "register" || queryParams === "recover" ? (
+        {queryParams === "login" ||
+        queryParams === "register" ||
+        queryParams === "recover" ||
+        queryParams === "resetPassword" ? (
           <>
             <form
               className="relative max-w-[450px] w-[75vw] flex flex-col gap-y-2 mb-4"
               onSubmit={handleSubmit(onSubmit)}>
-              {queryParams !== "login" && queryParams !== "recover" && (
+              {queryParams !== "login" && queryParams !== "resetPassword" && (
                 <FormInput
                   {...restEmail}
                   endIcon={<AiOutlineMail size={24} />}
@@ -404,7 +459,11 @@ transition-all duration-500`}
                   id="password"
                   label="Password"
                   type="password"
-                  placeholder={queryParams === "register" ? "NeW-RaNd0m_PasWorD" : "RaNd0m_PasWorD"}
+                  placeholder={
+                    queryParams === "register" || queryParams === "resetPassword"
+                      ? "NeW-RaNd0m_PasWorD"
+                      : "RaNd0m_PasWorD"
+                  }
                   disabled={isSubmitting || isEmailSent}
                   required
                 />
@@ -424,7 +483,7 @@ transition-all duration-500`}
               )}
               {/* LOGIN-BODY-HELP */}
               <div className="flex justify-between mb-2">
-                <div className={`${(queryParams === "recover" || queryParams === "register") && "invisible"}`}>
+                <div className={twMerge(`invisible`, queryParams === "login" && "visible")}>
                   {/* 'Remember me' now checkbox do nothing - expected !isChecked 1m jwt - isChecked 3m jwt */}
                   <Checkbox
                     className="bg-background cursor-pointer"
@@ -448,7 +507,7 @@ transition-all duration-500`}
                   ? "Login"
                   : queryParams === "register"
                   ? "Register"
-                  : queryParams === "recover"
+                  : queryParams === "recover" || queryParams === "resetPassword"
                   ? "Reset password"
                   : "Send email"}
               </Button>
@@ -480,7 +539,12 @@ transition-all duration-500`}
         ) : queryParams === "authCompleted" && isAuthCompleted === true ? (
           <div className="flex flex-col w-full">
             <p>image</p>
-            <p className="text-success">Auth completed - Thank you!</p>
+            <p className="text-success">Auth completed - thank you!</p>
+          </div>
+        ) : queryParams === "recoverCompleted" && isRecoverCompleted === true ? (
+          <div className="w-full h-[150px] flex flex-col gap-y-4 justify-center items-center">
+            <p>image</p>
+            <p className="text-success">Password recovered - stay safe!</p>
           </div>
         ) : (
           <h1 className="w-full h-[125px] flex justify-center items-center">

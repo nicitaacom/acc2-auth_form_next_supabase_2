@@ -1,5 +1,3 @@
-import { pusherServer } from "@/libs/pusher"
-import supabaseAdmin from "@/libs/supabaseAdmin"
 import { getURL } from "@/utils/helpers"
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
@@ -16,15 +14,11 @@ export async function GET(request: Request) {
     const supabase = createRouteHandlerClient({ cookies })
     const response = await supabase.auth.exchangeCodeForSession(code)
     if (response.data.user && response.data.user.email) {
-      await supabaseAdmin
-        .from("users")
-        .update({ email_confirmed_at: response.data.user.updated_at })
-        .eq("id", response.data.user.id)
-      pusherServer.trigger(response.data.user.email, "auth:completed", response.data.user)
+      cookies().set("email", response.data.user.email)
     } else {
-      const error_description = encodeURIComponent("No user found after exchanging cookies for registration")
+      const error_description = encodeURIComponent("No user found after exchanging cookies for recovering")
       return NextResponse.redirect(`${requestUrl.origin}/error?error_description=${error_description}`)
     }
+    return NextResponse.redirect(`${getURL()}?modal=AuthModal&variant=resetPassword&code=${code}`)
   }
-  return NextResponse.redirect(`${getURL()}auth/completed?code=${code}`)
 }
