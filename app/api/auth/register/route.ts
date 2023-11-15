@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       email: email,
       password: password,
       options: {
-        emailRedirectTo: `${getURL()}auth/callback/smth`,
+        emailRedirectTo: `${getURL()}auth/callback`,
       },
     })
     if (signUpError) throw new Error(`api/auth/register/route.ts \n ${signUpError}`)

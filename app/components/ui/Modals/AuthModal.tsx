@@ -15,6 +15,7 @@ import ContinueWithButton from "@/(auth)/components/ContinueWithButton"
 import { Button, Checkbox, ModalContainer } from ".."
 import { Timer } from "@/(auth)/components"
 import { twMerge } from "tailwind-merge"
+import { pusherClient } from "@/libs/pusher"
 
 //TODO - its trash code - reduce line amount of line
 
@@ -37,6 +38,7 @@ export function AuthModal({ label }: AdminModalProps) {
   const queryParams = useSearchParams().get("variant")
   const [isChecked, setIsChecked] = useState(false)
   const [isEmailSent, setIsEmailSent] = useState(false)
+  const [isAuthCompleted, setIsAuthCompleted] = useState(false)
   const [responseMessage, setResponseMessage] = useState<React.ReactNode>(<p></p>)
   //for case when user click 'Forgot password?' or 'Create account' and some data in responseMessage
   useEffect(() => {
@@ -59,6 +61,26 @@ export function AuthModal({ label }: AdminModalProps) {
   function displayResponseMessage(message: React.ReactNode) {
     setResponseMessage(message)
   }
+
+  useEffect(() => {
+    if (isAuthCompleted) router.push("?modal=AuthModal&variant=authCompleted")
+    // else router.push("?modal=AuthModal&variant=login")
+  }, [isAuthCompleted, router])
+
+  useEffect(() => {
+    function authCompletedHandler() {
+      setIsAuthCompleted(true)
+    }
+
+    pusherClient.bind("auth:completed", authCompletedHandler)
+    return () => {
+      console.log(77, "emailInputRef.current?.value - ", emailInputRef.current?.value)
+      if (emailInputRef.current?.value) {
+        pusherClient.unsubscribe(emailInputRef.current?.value)
+      }
+      pusherClient.unbind("auth:completed", authCompletedHandler)
+    }
+  }, [])
 
   async function signInWithPassword(emailOrUsername: string, password: string) {
     //Check user wants login with email or username
@@ -156,6 +178,10 @@ export function AuthModal({ label }: AdminModalProps) {
       }
 
       setIsEmailSent(true)
+      if (emailInputRef.current) {
+        console.log(184, "pusher subscribe to - emailInputRef.current?.value -", emailInputRef.current?.value)
+        pusherClient.subscribe(emailInputRef.current?.value)
+      }
       setResponseMessage(<p className="text-success">Check your email</p>)
       setTimeout(() => {
         setResponseMessage(
@@ -323,7 +349,11 @@ ${
 } 
 ${
   //for reset-password height when errors
-  queryParams === "reset-password" && errors.password && "!h-[350px]"
+  queryParams === "recover" && errors.password && "!h-[350px]"
+}
+${
+  //for reset-password height when errors
+  queryParams === "authCompleted" && "!h-[250px]"
 }
 transition-all duration-500`}
       modalQuery="AuthModal">
@@ -331,16 +361,22 @@ transition-all duration-500`}
         <div className="flex flex-row gap-x-4 items-center h-[100px]">
           <Image className="w-[30px] h-[40px]" src="/big-dark.png" alt="logo" width={80} height={100} />
           <h1 className="text-4xl font-bold">
-            {queryParams === "login" ? "Login" : queryParams === "register" ? "Register" : "Recover"}
+            {queryParams === "login"
+              ? "Login"
+              : queryParams === "register"
+              ? "Register"
+              : queryParams === "recover"
+              ? "Recover"
+              : "Auth completed"}
           </h1>
         </div>
 
-        {queryParams === "login" || "register" || "recover" ? (
+        {queryParams === "login" || queryParams === "register" || queryParams === "recover" ? (
           <>
             <form
               className="relative max-w-[450px] w-[75vw] flex flex-col gap-y-2 mb-4"
               onSubmit={handleSubmit(onSubmit)}>
-              {queryParams !== "login" && queryParams !== "reset-password" && (
+              {queryParams !== "login" && queryParams !== "recover" && (
                 <FormInput
                   {...restEmail}
                   endIcon={<AiOutlineMail size={24} />}
@@ -380,7 +416,7 @@ transition-all duration-500`}
                   id="password"
                   label="Password"
                   type="password"
-                  placeholder={queryParams === "reset-password" ? "NeW-RaNd0m_PasWorD" : "RaNd0m_PasWorD"}
+                  placeholder={queryParams === "register" ? "NeW-RaNd0m_PasWorD" : "RaNd0m_PasWorD"}
                   disabled={isSubmitting || isEmailSent}
                   required
                 />
@@ -400,7 +436,7 @@ transition-all duration-500`}
               )}
               {/* LOGIN-BODY-HELP */}
               <div className="flex justify-between mb-2">
-                <div className={`${(queryParams === "recover" || queryParams === "reset-password") && "invisible"}`}>
+                <div className={`${(queryParams === "recover" || queryParams === "register") && "invisible"}`}>
                   {/* 'Remember me' now checkbox do nothing - expected !isChecked 1m jwt - isChecked 3m jwt */}
                   <Checkbox
                     className="bg-background cursor-pointer"
@@ -424,7 +460,7 @@ transition-all duration-500`}
                   ? "Login"
                   : queryParams === "register"
                   ? "Register"
-                  : queryParams === "reset-password"
+                  : queryParams === "recover"
                   ? "Reset password"
                   : "Send email"}
               </Button>
@@ -453,8 +489,15 @@ transition-all duration-500`}
               </section>
             )}
           </>
+        ) : queryParams === "authCompleted" && isAuthCompleted === true ? (
+          <div className="flex flex-col w-full">
+            <p>image</p>
+            <p className="text-success">Auth completed - Thank you!</p>
+          </div>
         ) : (
-          <h1>Now change query params back to &variant=login :) </h1>
+          <h1 className="w-full h-[125px] flex justify-center items-center">
+            Now change query params back to &variant=login :)
+          </h1>
         )}
       </div>
     </ModalContainer>

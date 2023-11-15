@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { EmailLinkInvalidOrExpired } from "./EmailLinkInvalidOrExpired"
 import { ExchangeCookiesError } from "./ExchangeCookiesError"
-import { ErrorFetchingUser } from "./ErrorFetchingUser"
+import { AuthNotCompleted } from "./AuthNotCompleted"
 
 export default function Error() {
   const [error, setError] = useState("")
@@ -25,8 +25,8 @@ export default function Error() {
   if (error_description === "No user found after exchanging cookies") {
     return <ExchangeCookiesError />
   }
-  if (error_description === "Error fetching user") {
-    return <ErrorFetchingUser />
+  if (error_description === "You have no access to this route - your auth not completed") {
+    return <AuthNotCompleted />
   }
   // Get error details from URL
 
