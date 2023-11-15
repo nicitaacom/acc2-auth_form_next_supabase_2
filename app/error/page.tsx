@@ -28,11 +28,12 @@ export default function Error() {
   if (error_description === "You have no access to this route - your auth not completed") {
     return <AuthNotCompleted />
   }
+
   // Get error details from URL
 
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <p>Unknow error occurred</p>
+      {error_description ? <p>{error_description}</p> : <p>Unknown error occurred</p>}
       <p>Please let us know how you got this error here - {process.env.NEXT_PUBLIC_SUPPORT_EMAIL}</p>
     </div>
   )

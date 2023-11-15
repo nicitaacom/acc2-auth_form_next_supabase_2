@@ -90,7 +90,10 @@ export function AuthModal({ label }: AdminModalProps) {
           email: emailOrUsername,
           password: password,
         })
-        if (signInError) throw signInError
+        if (signInError) {
+          const error_description = encodeURIComponent(signInError.message)
+          router.push(`/error?error_description=${error_description}`)
+        }
 
         if (user.user) {
           //store info somewhere (e.g in localStorage with zustand)
