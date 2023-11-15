@@ -19,8 +19,8 @@ export async function GET(request: Request) {
         .from("users")
         .update({ email_confirmed_at: response.data.user.updated_at })
         .eq("id", response.data.user.id)
-      console.log(22, "data - ", data)
-      console.log(23, "error - ", error)
+
+      //TODO - trigger pusher to email
     } else {
       return NextResponse.redirect(
         `${requestUrl.origin}/error?error_description=No user found after exchanging cookies`,
