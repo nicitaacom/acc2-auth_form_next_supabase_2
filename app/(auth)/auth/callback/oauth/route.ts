@@ -55,18 +55,6 @@ export async function GET(request: Request) {
           if (update_provider_error) throw update_provider_error
         }
 
-        console.log(58, "response.data.user - ", response.data.user)
-        console.log(59, "response.data.user.user_metadata - ", response.data.user.user_metadata)
-        console.log(
-          61,
-          "response.data.user?.identities![0]?.identity_data - ",
-          response.data.user?.identities![0]?.identity_data,
-        )
-        console.log(
-          61,
-          "response.data.user?.identities![1]?.identity_data - ",
-          response.data.user?.identities![1]?.identity_data,
-        )
         // 5. Replace avatar_url if !avatar_url
         // For case if user have no avatar and signIn with oauth where user have avatar_url
         // TOTO - signIn with credentials - logout - login with oauth where !avatar_url
