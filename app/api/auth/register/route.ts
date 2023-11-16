@@ -42,19 +42,24 @@ export async function POST(req: Request) {
       throw new Error("User exists - check your email\n You might not verified your email")
     }
 
-    // Check if user with this email already exists OAuth
+    // TODO - Check if user with this email already exists OAuth (first)
+    // TODO - Check if user with this email already exists OAuth (second)
 
-    // Check if user with this email already exists Credentials
+    // TODO - Check if user with this email already exists Credentials
 
-    // Inser row in 'users' table for a new user
+    // Insert row in 'users' table for a new user
     const { data: user, error: signUpError } = await supabase.auth.signUp({
       email: email,
       password: password,
       options: {
-        emailRedirectTo: `${getURL()}auth/callback`,
+        emailRedirectTo: `${getURL()}auth/callback/credentials`,
       },
     })
-    if (signUpError) throw new Error(`api/auth/register/route.ts \n ${signUpError}`)
+    if (signUpError) {
+      console.log(`api/auth/register/route.ts ${signUpError}`)
+      throw new Error(`${signUpError}`)
+    }
+
     if (user && user.user?.id) {
       const { error: insertError } = await supabaseAdmin
         .from("users")
@@ -69,6 +74,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ user })
   } catch (error: any) {
     if (error instanceof Error) {
+      console.log(72, "error - ", error)
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
   }
