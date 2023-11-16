@@ -28,26 +28,30 @@ export async function POST(req: Request) {
     So you can recover your password and get access to support`)
     }
 
-    // Check if user with this email already exists not verified email
-    const { data } = await supabaseAdmin.from("users").select("email,email_confirmed_at").eq("email", email).single()
-    if (data?.email === email && data.email_confirmed_at) {
-      throw new Error("This user already exists")
+    // Check if user with this email already exists with verified email
+    const { data: email_response } = await supabaseAdmin
+      .from("users")
+      .select("email,email_confirmed_at")
+      .eq("email", email)
+      .single()
+    if (email_response?.email === email && email_response.email_confirmed_at) {
+      throw new Error("User with this email already exists")
     }
-    if (data?.email === email && !data.email_confirmed_at) {
+    // Resend email if user try to register email that already exists but not confirmed
+    if (email_response?.email === email && !email_response.email_confirmed_at) {
       const { error: resendError } = await supabaseAdmin.auth.resend({
         type: "signup",
         email: email,
+        options: {
+          emailRedirectTo: `${getURL()}auth/callback/credentials`,
+        },
       })
       if (resendError) throw resendError
       throw new Error("User exists - check your email\n You might not verified your email")
     }
 
-    // TODO - Check if user with this email already exists OAuth (first)
-    // TODO - Check if user with this email already exists OAuth (second)
-
-    // TODO - Check if user with this email already exists Credentials
-
-    // Insert row in 'users' table for a new user
+    /* Insert row in 'users' table for a new user */
+    //Sign up to add row in 'auth.users' and get verification email
     const { data: user, error: signUpError } = await supabase.auth.signUp({
       email: email,
       password: password,
@@ -59,12 +63,14 @@ export async function POST(req: Request) {
       console.log(`api/auth/register/route.ts ${signUpError}`)
       throw new Error(`${signUpError}`)
     }
-
+    // Insert row in 'public.users' table (if user exist throw error)
+    // Don't insert provider ['credentials'] on this step because supabase delete 'enctypted_password'
+    // from 'auth.users' if you not verify your email and login with oauth
+    // (without 'encrypted_password' supabase don't let you login)
     if (user && user.user?.id) {
       const { error: insertError } = await supabaseAdmin
         .from("users")
         .insert({ id: user.user.id, username: username, email: email })
-
       if (insertError) {
         insertError.message.includes("duplicate key value")
         throw new Error(`User with this email already exists`)
@@ -72,7 +78,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ user })
-  } catch (error: any) {
+  } catch (error) {
     if (error instanceof Error) {
       console.log(72, "error - ", error)
       return NextResponse.json({ error: error.message }, { status: 400 })
