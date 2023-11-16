@@ -15,7 +15,7 @@ export default function ContinueWithButton({ href, provider, className }: Contin
     if (provider === "google") {
       const { error } = await supabaseClient.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: `${location.origin}/auth/callback/oauth` },
+        options: { redirectTo: `${location.origin}/auth/callback/oauth?provider=google` },
       })
       if (error) throw error
     } else if (provider === "faceit") {
@@ -23,7 +23,7 @@ export default function ContinueWithButton({ href, provider, className }: Contin
     } else if (provider === "twitter") {
       const { error } = await supabaseClient.auth.signInWithOAuth({
         provider: "twitter",
-        options: { redirectTo: `${location.origin}/auth/callback/oauth` },
+        options: { redirectTo: `${location.origin}/auth/callback/oauth?provider=twitter` },
       })
       if (error) throw error
     }
