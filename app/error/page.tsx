@@ -9,11 +9,9 @@ import { Button } from "@/components/ui"
 
 export default function Error() {
   const router = useRouter()
-  const [error, setError] = useState("")
   const error_description = useSearchParams().get("error_description")
-  const url = typeof window !== "undefined" ? window.location.href : ""
 
-  if (error === "Email link is invalid or has expired") {
+  if (error_description === "Email link is invalid or has expired") {
     return <EmailLinkInvalidOrExpired />
   }
   if (error_description === "No user found after exchanging cookies for registration") {
