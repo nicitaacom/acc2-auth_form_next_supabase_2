@@ -80,7 +80,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ user })
   } catch (error) {
     if (error instanceof Error) {
-      console.log(72, "error - ", error)
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
   }
