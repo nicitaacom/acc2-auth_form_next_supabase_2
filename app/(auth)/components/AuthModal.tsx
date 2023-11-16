@@ -127,8 +127,6 @@ export function AuthModal({ label }: AdminModalProps) {
         )
       }
 
-      // TODO - Check if user with this email already exists (if user 1 time auth with credentials - 2 time auth with OAuth)
-
       if (user.user) {
         //store info somewhere (e.g in localStorage with zustand)
         reset()
@@ -313,7 +311,7 @@ export function AuthModal({ label }: AdminModalProps) {
         password: password,
       } as TAPIAuthRecover)
 
-      //TODO - set data in store (userStore.setUser()) - and set data from response
+      //TODO - set response.data in store (userStore.setUser()) - and set data from response
 
       displayResponseMessage(
         <div className="text-success flex flex-col justify-center items-center">
@@ -371,7 +369,7 @@ export function AuthModal({ label }: AdminModalProps) {
         queryParams === "recover" && errors.email && "!h-[380px]",
 
         //for resetPassword height when errors
-        queryParams === "resetPassword" && errors.password && "!h-[370px]",
+        queryParams === "resetPassword" && errors.password && "!h-[390px]",
 
         //for auth completed height
         queryParams === "authCompleted" && "!h-[250px]",
