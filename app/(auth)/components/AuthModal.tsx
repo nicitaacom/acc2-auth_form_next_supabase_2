@@ -30,7 +30,6 @@ interface AdminModalProps {
 interface FormData {
   username: string
   email: string
-  emailOrUsername: string
   password: string
 }
 
@@ -60,11 +59,6 @@ export function AuthModal({ label }: AdminModalProps) {
     trigger,
     getValues,
   } = useForm<FormData>()
-
-  // const { ref, ...restEmail } = register("email")
-  // const { ...restemailOrUsername } = register("emailOrUsername")
-  // const { ...restPassword } = register("password")
-  // const { ...restUsername } = register("username")
 
   //when user submit form and got response message from server
   function displayResponseMessage(message: React.ReactNode) {
@@ -107,86 +101,77 @@ export function AuthModal({ label }: AdminModalProps) {
     }
   }, [getValues, isRecoverCompleted, router])
 
-  async function signInWithPassword(emailOrUsername: string, password: string) {
+  async function signInWithPassword(email: string, password: string) {
     //Check user wants login with email or username
-    const isEmail = emailOrUsername.includes("@")
-    if (isEmail) {
-      try {
-        const { data: user, error: signInError } = await supabaseClient.auth.signInWithPassword({
-          email: emailOrUsername,
-          password: password,
-        })
-        if (signInError) throw signInError
+    try {
+      const response = await axios.post("/api/auth/login", { email: email } as TAPIAuthLogin)
 
-        if (user.user) {
-          //store info somewhere (e.g in localStorage with zustand)
-          reset()
-
-          displayResponseMessage(
-            <div className="text-success flex flex-col justify-center items-center">
-              You are logged in - you may close this modal
-              <Timer label="I close this modal in" seconds={5} action={() => router.replace("/")} />
-            </div>,
-          )
-        }
-      } catch (error) {
-        if (error instanceof Error && error.message === "Invalid login credentials") {
-          displayResponseMessage(<p className="text-danger">Wrong email or password</p>)
-        } else if (error instanceof Error) {
-          displayResponseMessage(<p className="text-danger">{error.message}</p>)
-        } else {
-          displayResponseMessage(
-            <div className="text-danger flex flex-row">
-              <p>An unknown error occurred - contact admin&nbsp;</p>
-              <Button className="text-info" href="https://t.me/nicitaacom" variant="link">
-                here
-              </Button>
-            </div>,
-          )
-        }
+      const { data: user, error: signInError } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password,
+      })
+      // Check if user with this email already exists (if user first time auth with OAuth)
+      // Throw error if user exist with oauth provider
+      if (signInError) {
+        const isCredentialsProvider = response.data.providers?.includes("credentials")
+        const isOnlyGoogleProvider =
+          Array.isArray(response.data.providers) &&
+          response.data.providers.length === 1 &&
+          response.data.providers[0] === "google"
+        throw new Error(
+          isCredentialsProvider
+            ? `Wrong email or password`
+            : isOnlyGoogleProvider
+            ? "You already have account with google"
+            : `You already have an account with ${response.data.providers}`,
+        )
       }
-    } else {
-      try {
-        const response = await axios.post("/api/auth/login", { username: emailOrUsername } as TAPIAuthLogin)
 
-        if (response.data.email) {
-          const { data: user, error: signInError } = await supabaseClient.auth.signInWithPassword({
-            email: response.data.email,
-            password: password,
-          })
-          if (signInError) throw signInError
+      // TODO - Check if user with this email already exists (if user 1 time auth with credentials - 2 time auth with OAuth)
 
-          if (user.user) {
-            //store info somewhere (e.g in localStorage with zustand)
-            reset()
+      if (user.user) {
+        //store info somewhere (e.g in localStorage with zustand)
+        reset()
 
-            displayResponseMessage(
-              <div className="text-success flex flex-col justify-center items-center">
-                You are logged in - you may close this modal
-                <Timer label="I close this modal in" seconds={5} action={() => router.replace("/")} />
-              </div>,
-            )
-          }
-        } else {
-          displayResponseMessage(<p className="text-danger">No user with this username</p>)
-        }
-      } catch (error) {
-        if (error instanceof Error && error.message === "Invalid login credentials") {
-          displayResponseMessage(<p className="text-danger">Wrong email or password</p>)
-        } else if (error instanceof AxiosError) {
-          displayResponseMessage(<p className="text-danger">{error.response?.data.error}</p>)
-        } else if (error instanceof Error) {
-          displayResponseMessage(<p className="text-danger">{error.message}</p>)
-        } else {
+        displayResponseMessage(
+          <div className="text-success flex flex-col justify-center items-center">
+            You are logged in - you may close this modal
+            <Timer label="I close this modal in" seconds={5} action={() => router.replace("/")} />
+          </div>,
+        )
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message === "Invalid login credentials") {
+        displayResponseMessage(<p className="text-danger">Wrong email or password</p>)
+      } else if (error instanceof AxiosError) {
+        displayResponseMessage(<p className="text-danger">{error.response?.data.error}</p>)
+      } else if (error instanceof Error) {
+        if (error.message === "You already have account with google") {
           displayResponseMessage(
-            <div className="text-danger flex flex-row">
-              <p>An unknown error occurred - contact admin&nbsp;</p>
-              <Button className="text-info" href="https://t.me/nicitaacom" variant="link">
-                here
+            <div className="flex flex-col justify-center items-center">
+              <p className="text-danger">You already have account with google</p>
+              <Button
+                variant="link"
+                onClick={async () =>
+                  await supabaseClient.auth.signInWithOAuth({
+                    provider: "google",
+                    options: { redirectTo: `${location.origin}/auth/callback/oauth?provider=google` },
+                  })
+                }>
+                continue with google?
               </Button>
             </div>,
           )
-        }
+        } else displayResponseMessage(<p className="text-danger">{error.message}</p>)
+      } else {
+        displayResponseMessage(
+          <div className="text-danger flex flex-row">
+            <p>An unknown error occurred - contact admin&nbsp;</p>
+            <Button className="text-info" href="https://t.me/nicitaacom" variant="link">
+              here
+            </Button>
+          </div>,
+        )
       }
     }
   }
@@ -221,10 +206,17 @@ export function AuthModal({ label }: AdminModalProps) {
         )
       }, 5000)
     } catch (error) {
-      console.log(224, "error - ", error)
-      console.log(225, "error instanceof AxiosError - ", error instanceof AxiosError)
       if (error instanceof AxiosError) {
-        displayResponseMessage(<p className="text-danger">{error.response?.data.error}</p>)
+        if (error.response?.data.error === "User exists - check your email\n You might not verified your email") {
+          displayResponseMessage(
+            <div className="flex flex-col justify-center items-center">
+              <p className="text-danger">User exists - check your email</p>
+              <p className="text-danger">You might not verified your email</p>
+            </div>,
+          )
+        } else {
+          displayResponseMessage(<p className="text-danger">{error.response?.data.error}</p>)
+        }
       } else if (error instanceof Error) {
         displayResponseMessage(<p className="text-danger">{error.message}</p>)
       } else {
@@ -259,6 +251,7 @@ export function AuthModal({ label }: AdminModalProps) {
               onClick={() => {
                 setIsEmailSent(false)
                 setTimeout(() => {
+                  // TODO - fix because it doesn't set input.focus()
                   trigger("email", { shouldFocus: true })
                 }, 50)
               }}>
@@ -349,7 +342,7 @@ export function AuthModal({ label }: AdminModalProps) {
 
   const onSubmit = async (data: FormData) => {
     if (queryParams === "login") {
-      await signInWithPassword(data.emailOrUsername, data.password)
+      await signInWithPassword(data.email, data.password)
     } else if (queryParams === "register") {
       await signUp(data.username, data.email, data.password)
       // reset()
@@ -366,10 +359,10 @@ export function AuthModal({ label }: AdminModalProps) {
     <ModalQueryContainer
       className={twMerge(
         `w-[500px] transition-all duration-300`,
-        queryParams === "login" ? "h-[585px]" : queryParams === "register" ? "h-[650px]" : "h-[350px]",
+        queryParams === "login" ? "h-[585px]" : queryParams === "register" ? "h-[670px]" : "h-[350px]",
 
         //for login height when errors
-        queryParams === "login" && (errors.emailOrUsername || errors.password) && "!h-[610px]",
+        queryParams === "login" && errors.password && "!h-[610px]",
 
         //for register height when errors
         queryParams === "register" && (errors.email || errors.password) && "!h-[720px]",
@@ -414,7 +407,7 @@ export function AuthModal({ label }: AdminModalProps) {
             <form
               className="relative max-w-[450px] w-[75vw] flex flex-col gap-y-2 mb-4"
               onSubmit={handleSubmit(onSubmit)}>
-              {queryParams !== "login" && queryParams !== "resetPassword" && (
+              {queryParams !== "resetPassword" && (
                 <FormInput
                   endIcon={<AiOutlineMail size={24} />}
                   register={register}
@@ -423,18 +416,6 @@ export function AuthModal({ label }: AdminModalProps) {
                   label="Email"
                   placeholder="user@big.com"
                   disabled={isSubmitting || isEmailSent}
-                  required
-                />
-              )}
-              {queryParams === "login" && (
-                <FormInput
-                  endIcon={<AiOutlineUser size={24} />}
-                  register={register}
-                  errors={errors}
-                  id="emailOrUsername"
-                  label="Email or username"
-                  placeholder="HANTARESpeek"
-                  disabled={isSubmitting}
                   required
                 />
               )}
