@@ -82,8 +82,6 @@ export function AuthModal({ label }: AdminModalProps) {
       setIsAuthCompleted(true)
     }
 
-    console.log(85, "re-render")
-
     pusherClient.bind("auth:completed", authCompletedHandler)
     return () => {
       if (getValues("email")) {
@@ -96,7 +94,6 @@ export function AuthModal({ label }: AdminModalProps) {
   // Show 'Recover completed' if user changed password in another window
   useEffect(() => {
     if (isRecoverCompleted) router.push("?modal=AuthModal&variant=recoverCompleted")
-    console.log(99, "re-render")
 
     function recoverCompletedHandler() {
       setIsRecoverCompleted(true)
@@ -201,13 +198,6 @@ export function AuthModal({ label }: AdminModalProps) {
         email: email,
         password: password,
       } as TAPIAuthRegister)
-
-      if (
-        signUpResponse.data.error ===
-        "It seems like you use temp-mail - please use actuall email\n\n    So you can recover your password and get access to support"
-      ) {
-        throw new Error(signUpResponse.data.error)
-      }
 
       setIsEmailSent(true)
       if (getValues("email")) {
@@ -391,7 +381,13 @@ export function AuthModal({ label }: AdminModalProps) {
       modalQuery="AuthModal">
       <div className="flex flex-col justify-center gap-y-2 w-[90%] mx-auto">
         <div className="flex flex-row gap-x-4 items-center h-[100px]">
-          <Image src={darkMode.isDarkMode ? "/logo-dark.png" : "/logo-light.png"} alt="logo" width={40} height={57} />
+          <Image
+            className="w-[40px] h-[57px]"
+            src={darkMode.isDarkMode ? "/logo-dark.png" : "/logo-light.png"}
+            alt="logo"
+            width={40}
+            height={57}
+          />
           <h1 className="text-4xl font-bold">
             {queryParams === "login"
               ? "Login"
