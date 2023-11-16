@@ -26,4 +26,44 @@ This route required for case when user click 'continue with google' or 'continue
 
 ## Usage for completed folder
 
+This is `/auth/callback/completed` route that user see when verified email without errors
+
 ## Usage for recover folder
+
+I use this route if user decide to change password
+In this route I:
+
+1. Throw error supabase throw error because link to recover password was used or expired
+2. Exchange cookies to get session data (and set session in cookies)
+3. If 'credentials' provider doesn't exist - add 'credentials' provider to `providers` column in DB
+4. Save email in cookies to tiger pusher to action like 'your password changed - stay safe'
+
+**Auth modal**
+
+```ts
+useEffect(() => {
+  if (isRecoverCompleted) router.push("?modal=AuthModal&variant=recoverCompleted")
+
+  function recoverCompletedHandler() {
+    setIsRecoverCompleted(true)
+  }
+  pusherClient.bind("recover:completed", recoverCompletedHandler)
+  return () => {
+    if (getValues("email")) {
+      pusherClient.unsubscribe(getValues("email"))
+    }
+    pusherClient.unbind("recover:completed", recoverCompletedHandler)
+  }
+}, [getValues, isRecoverCompleted, router])
+
+const response = await axios.post("api/auth/recover", {
+  email: getCookie("email"),
+  password: password,
+} as TAPIAuthRecover)
+```
+
+**api/auth/recover/route.ts**
+
+```ts
+pusherServer.trigger(body.email, "recover:completed", "")
+```
