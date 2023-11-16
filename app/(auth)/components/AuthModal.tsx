@@ -193,11 +193,15 @@ export function AuthModal({ label }: AdminModalProps) {
 
   async function signUp(username: string, email: string, password: string) {
     try {
-      const signUpResponse = await axios.post("/api/auth/register", {
-        username: username,
-        email: email,
-        password: password,
-      } as TAPIAuthRegister)
+      const signUpResponse = await axios
+        .post("/api/auth/register", {
+          username: username,
+          email: email,
+          password: password,
+        } as TAPIAuthRegister)
+        .catch(error => {
+          throw error
+        })
 
       setIsEmailSent(true)
       if (getValues("email")) {
@@ -217,10 +221,11 @@ export function AuthModal({ label }: AdminModalProps) {
         )
       }, 5000)
     } catch (error) {
+      console.log(224, "error - ", error)
+      console.log(225, "error instanceof AxiosError - ", error instanceof AxiosError)
       if (error instanceof AxiosError) {
-        displayResponseMessage(error.response?.data.error)
-      }
-      if (error instanceof Error) {
+        displayResponseMessage(<p className="text-danger">{error.response?.data.error}</p>)
+      } else if (error instanceof Error) {
         displayResponseMessage(<p className="text-danger">{error.message}</p>)
       } else {
         displayResponseMessage(
@@ -347,7 +352,7 @@ export function AuthModal({ label }: AdminModalProps) {
       await signInWithPassword(data.emailOrUsername, data.password)
     } else if (queryParams === "register") {
       await signUp(data.username, data.email, data.password)
-      reset()
+      // reset()
     } else if (queryParams === "recover") {
       router.refresh()
       await recoverPassword(data.email)
@@ -361,7 +366,7 @@ export function AuthModal({ label }: AdminModalProps) {
     <ModalQueryContainer
       className={twMerge(
         `w-[500px] transition-all duration-300`,
-        queryParams === "login" ? "h-[585px]" : queryParams === "register" ? "h-[625px]" : "h-[350px]",
+        queryParams === "login" ? "h-[585px]" : queryParams === "register" ? "h-[650px]" : "h-[350px]",
 
         //for login height when errors
         queryParams === "login" && (errors.emailOrUsername || errors.password) && "!h-[610px]",
