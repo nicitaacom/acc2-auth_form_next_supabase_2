@@ -16,6 +16,7 @@ export interface Database {
           email: string
           email_confirmed_at: string | null
           id: string
+          providers: string[] | null
           role: string
           username: string
         }
@@ -25,6 +26,7 @@ export interface Database {
           email: string
           email_confirmed_at?: string | null
           id: string
+          providers?: string[] | null
           role?: string
           username: string
         }
@@ -34,6 +36,7 @@ export interface Database {
           email?: string
           email_confirmed_at?: string | null
           id?: string
+          providers?: string[] | null
           role?: string
           username?: string
         }
