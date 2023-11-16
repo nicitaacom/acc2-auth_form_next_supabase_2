@@ -4,7 +4,7 @@ import { twMerge } from "tailwind-merge"
 interface FormData {
   username: string
   email: string
-  emailOrUsername: string
+  emailOrUsername?: string
   password: string
 }
 
