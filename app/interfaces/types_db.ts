@@ -11,7 +11,7 @@ export interface Database {
     Tables: {
       users: {
         Row: {
-          avatarUrl: string | null
+          avatar_url: string | null
           created_at: string
           email: string
           email_confirmed_at: string | null
@@ -20,7 +20,7 @@ export interface Database {
           username: string
         }
         Insert: {
-          avatarUrl?: string | null
+          avatar_url?: string | null
           created_at?: string
           email: string
           email_confirmed_at?: string | null
@@ -29,7 +29,7 @@ export interface Database {
           username: string
         }
         Update: {
-          avatarUrl?: string | null
+          avatar_url?: string | null
           created_at?: string
           email?: string
           email_confirmed_at?: string | null
