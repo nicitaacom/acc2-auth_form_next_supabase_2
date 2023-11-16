@@ -4,8 +4,11 @@ import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 
 export async function GET(request: Request) {
+  // Get code to exchange this code to cookies session in the future
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get("code")
+
+  // Redirect to error page if supabase throw error on recover
   const error_description = requestUrl.searchParams.get("error_description")
   if (error_description) {
     return NextResponse.redirect(`${requestUrl.origin}/error`)
