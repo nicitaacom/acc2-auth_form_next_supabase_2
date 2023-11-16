@@ -1,23 +1,17 @@
 "use client"
 
-import { useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { EmailLinkInvalidOrExpired } from "./EmailLinkInvalidOrExpired"
 import { ExchangeCookiesError } from "./ExchangeCookiesError"
 import { AuthNotCompleted } from "./AuthNotCompleted"
+import { Button } from "@/components/ui"
 
 export default function Error() {
+  const router = useRouter()
   const [error, setError] = useState("")
   const error_description = useSearchParams().get("error_description")
   const url = typeof window !== "undefined" ? window.location.href : ""
-
-  useEffect(() => {
-    if (url.includes("Email+link+is+invalid+or+has+expired")) {
-      setError("Email link is invalid or has expired")
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   if (error === "Email link is invalid or has expired") {
     return <EmailLinkInvalidOrExpired />
@@ -35,9 +29,16 @@ export default function Error() {
   // Get error details from URL
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      {error_description ? <p>{error_description}</p> : <p>Unknown error occurred</p>}
-      <p>Please let us know how you got this error here - {process.env.NEXT_PUBLIC_SUPPORT_EMAIL}</p>
+    <div className="min-h-screen flex flex-col gap-y-4 items-center justify-center">
+      <div className="flex flex-col justify-center items-center">
+        {error_description ? (
+          <p className="text-danger">{error_description}</p>
+        ) : (
+          <p className="text-danger">Unknown error occurred</p>
+        )}
+        <p>Please let us know how you got this error here - {process.env.NEXT_PUBLIC_SUPPORT_EMAIL}</p>
+      </div>
+      <Button onClick={() => router.push("/")}>Back to main</Button>
     </div>
   )
 }
