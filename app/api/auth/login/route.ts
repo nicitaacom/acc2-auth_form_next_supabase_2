@@ -2,24 +2,36 @@ import supabaseAdmin from "@/libs/supabaseAdmin"
 import { NextResponse } from "next/server"
 
 export type TAPIAuthLogin = {
-  username: string
+  email: string
 }
 
 export async function POST(req: Request) {
   const body: TAPIAuthLogin = await req.json()
 
   try {
-    const { data: email, error: emailSelectError } = await supabaseAdmin
+    // Check is user with this email exist
+    const { data: email_response, error: emailSelectError } = await supabaseAdmin
       .from("users")
       .select("email")
-      .eq("username", body.username)
+      .eq("email", body.email)
       .single()
-    const email_response = email?.email
+    const email = email_response?.email
 
     if (emailSelectError) {
-      throw new Error(`Error selecting email with this username ${emailSelectError}`)
+      console.log(22, "emailSelectError \n", emailSelectError)
+      throw emailSelectError
     }
-    return NextResponse.json({ email: email_response })
+    if (!email) {
+      throw new Error("User with this email doesn't exist")
+    }
+    const { data: provider_response } = await supabaseAdmin
+      .from("users")
+      .select("providers")
+      .eq("email", body.email)
+      .single()
+    const providers = provider_response?.providers
+
+    return NextResponse.json({ providers: providers })
   } catch (error: any) {
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 })
