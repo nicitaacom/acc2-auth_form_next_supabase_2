@@ -5,49 +5,95 @@ import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 
 export async function GET(request: Request) {
+  // get data about code to exchange this code to cookies session
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get("code")
 
-  //If supabase put something in error_description - show it on error page
+  // get data about provider to save it in DB to throw error like
+  // 'You already have signed in account with google - continue with google?'
+  const provider = requestUrl.searchParams.get("provider")
+
+  // 1. If supabase put something in error_description - show it on error page
   const error_description = requestUrl.searchParams.get("error_description")
   if (error_description) {
     const supabase_error_description = encodeURIComponent(error_description)
     return NextResponse.redirect(`${requestUrl.origin}/error?error_description=${supabase_error_description}`)
   }
 
-  // exchange cookies for session and set avatar url
   if (code) {
+    // 2. Exchange cookies for session (to get session data)
     const supabase = createRouteHandlerClient({ cookies })
     const response = await supabase.auth.exchangeCodeForSession(code)
+
     if (response.data.user && response.data.user.email) {
-      // Insert row if user doesn't exist
-      await supabaseAdmin.from("users").insert({
+      // 3. Insert row if user doesn't exist
+      const { error: is_row_exist } = await supabaseAdmin.from("users").insert({
         id: response.data.user.id,
         username: response.data.user.user_metadata.name,
         email: response.data.user.email,
         email_confirmed_at: response.data.user.email_confirmed_at,
+        avatar_url:
+          response.data.user.user_metadata.avatar_url || response.data.user?.identities![0]?.identity_data?.avatar_url,
+        providers: [provider!],
       })
-
-      // Replace avatar_url if !avatar_url
-      const { data, error: selectAvatarError } = await supabaseAdmin
-        .from("users")
-        .select("avatar_url")
-        .eq("email", response.data.user.email)
-        .single()
-      if (selectAvatarError) throw selectAvatarError
-      if (!data?.avatar_url) {
-        await supabaseAdmin
+      // If row already exist - do 4 and 5
+      if (is_row_exist) {
+        // 4. If provider_response !=== provider - add one more provider
+        // For case when user signIn with google first and then with the same email with twitter
+        const { data: provider_response } = await supabaseAdmin
           .from("users")
-          .update({
-            email_confirmed_at: response.data.user.updated_at,
-            avatar_url: response.data.user.user_metadata.avatar_url,
-          })
+          .select("providers")
           .eq("id", response.data.user.id)
+          .single()
+        // Check is provider exist (for case if user login 2 times with the same provider)
+        const existingProvider = provider_response?.providers?.filter(providerLabel => providerLabel === provider)
+        if (!existingProvider![0]) {
+          const { error: update_provider_error } = await supabaseAdmin
+            .from("users")
+            .update({ providers: [...provider_response?.providers!, provider!] })
+            .eq("id", response.data.user.id)
+          if (update_provider_error) throw update_provider_error
+        }
+
+        console.log(58, "response.data.user - ", response.data.user)
+        console.log(59, "response.data.user.user_metadata - ", response.data.user.user_metadata)
+        console.log(
+          61,
+          "response.data.user?.identities![0]?.identity_data - ",
+          response.data.user?.identities![0]?.identity_data,
+        )
+        console.log(
+          61,
+          "response.data.user?.identities![1]?.identity_data - ",
+          response.data.user?.identities![1]?.identity_data,
+        )
+        // 5. Replace avatar_url if !avatar_url
+        // For case if user have no avatar and signIn with oauth where user have avatar_url
+        // TOTO - signIn with credentials - logout - login with oauth where !avatar_url
+        const { data: avatar_url_reponse, error: select_avatar_url_error } = await supabaseAdmin
+          .from("users")
+          .select("avatar_url")
+          .eq("email", response.data.user.email)
+          .single()
+
+        if (select_avatar_url_error) throw select_avatar_url_error
+        if (!avatar_url_reponse?.avatar_url) {
+          await supabaseAdmin
+            .from("users")
+            .update({
+              email_confirmed_at: response.data.user.updated_at,
+              avatar_url:
+                response.data.user.user_metadata.avatar_url ||
+                response.data.user?.identities![0]?.identity_data?.avatar_url ||
+                response.data.user?.identities![1]?.identity_data?.avatar_url,
+            })
+            .eq("id", response.data.user.id)
+        }
       }
     } else {
       const error_description = encodeURIComponent("No user found after exchanging cookies for registration")
       return NextResponse.redirect(`${requestUrl.origin}/error?error_description=${error_description}`)
     }
   }
-  return NextResponse.redirect(`${getURL()}`)
+  return NextResponse.redirect(`${getURL()}/auth/callback`)
 }
