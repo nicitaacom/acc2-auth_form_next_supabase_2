@@ -22,20 +22,20 @@
       } else {
 ```
 
-## If error in headers (browser searchbar)
+## If error in headers (browser searchbar) -
 
 usually its error that you got when user click on invalid or expired link
 You not handle this that's why I created state in /error/page.tsx
-Below you see example if you handle error (you know what error message and why this error happened)
+Below you see example if you handle error (you know error message and why this error happened)
 
-## On server
+### On server
 
 ```ts
 const error_description = encodeURIComponent("No user found after exchanging cookies for recovering")
 return NextResponse.redirect(`${requestUrl.origin}/error?error_description=${error_description}`)
 ```
 
-## On client
+### On client
 
 ```ts
   const error_description = useSearchParams().get("error_description")
@@ -44,3 +44,20 @@ if (error_description === "No user found after exchanging cookies for registrati
     return <ExchangeCookiesError message="No user found after exchanging cookies for registration" />
   }
 ```
+
+## Usage for api/auth/login/route.ts
+
+I created this route to safely (with `supabaseAdmin`) check if user with this email exist
+(if exist - throw error) and to return providers if user exist - to throw error like
+'You already have accouth with google - continue with google?'
+
+## Usage for api/auth/recover/route.ts
+
+I use this route to recover password for user
+I do it in API route becasue I want to trigger pusher when user change password and show
+message like 'your password changed - stay safe'
+Because actually recover password flow consist from 3 steps
+
+1. You enter your email and click 'recover' button
+2. You click on button in your email message you become
+3. You change your password (and when you click 'change password' button I trigger pusher to show message)
