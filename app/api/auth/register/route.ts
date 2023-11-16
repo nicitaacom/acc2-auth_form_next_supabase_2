@@ -68,13 +68,7 @@ export async function POST(req: Request) {
     // from 'auth.users' if you not verify your email and login with oauth
     // (without 'encrypted_password' supabase don't let you login)
     if (user && user.user?.id) {
-      const { error: insertError } = await supabaseAdmin
-        .from("users")
-        .insert({ id: user.user.id, username: username, email: email })
-      if (insertError) {
-        insertError.message.includes("duplicate key value")
-        throw new Error(`User with this email already exists`)
-      }
+      await supabaseAdmin.from("users").insert({ id: user.user.id, username: username, email: email })
     }
 
     return NextResponse.json({ user })
