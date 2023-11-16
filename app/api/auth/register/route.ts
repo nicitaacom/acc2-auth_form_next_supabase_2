@@ -67,8 +67,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ user })
-  } catch (error) {
-    console.log(38, `api/auth/register\n ${error}`)
+  } catch (error: any) {
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
