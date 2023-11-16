@@ -7,11 +7,11 @@ import { usePathname, useSearchParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { AiOutlineUser, AiOutlineMail, AiOutlineLock } from "react-icons/ai"
 import supabaseClient from "@/libs/supabaseClient"
-import axios from "axios"
+import axios, { AxiosError } from "axios"
 
 import { TAPIAuthRegister } from "@/api/auth/register/route"
 import useDarkMode from "@/store/ui/darkModeStore"
-import FormInput from "../../components/ui/Inputs/Validation/FormInput"
+import { FormInput } from "../../components/ui/Inputs/Validation/FormInput"
 import ContinueWithButton from "@/(auth)/components/ContinueWithButton"
 import { Button, Checkbox, ModalQueryContainer } from "../../components/ui"
 import { Timer } from "@/(auth)/components"
@@ -82,6 +82,8 @@ export function AuthModal({ label }: AdminModalProps) {
       setIsAuthCompleted(true)
     }
 
+    console.log(85, "re-render")
+
     pusherClient.bind("auth:completed", authCompletedHandler)
     return () => {
       if (getValues("email")) {
@@ -89,26 +91,24 @@ export function AuthModal({ label }: AdminModalProps) {
       }
       pusherClient.unbind("auth:completed", authCompletedHandler)
     }
-  }, [])
+  }, [getValues])
 
   // Show 'Recover completed' if user changed password in another window
   useEffect(() => {
     if (isRecoverCompleted) router.push("?modal=AuthModal&variant=recoverCompleted")
+    console.log(99, "re-render")
 
-    console.log(93, "emailInputRef.current?.value - ", getValues("email"))
     function recoverCompletedHandler() {
       setIsRecoverCompleted(true)
-      console.log(96, "pusher subscribe isRecoverCompleted - ", isRecoverCompleted)
     }
     pusherClient.bind("recover:completed", recoverCompletedHandler)
     return () => {
       if (getValues("email")) {
-        console.log(101, "pusher unsubscribe value - ", getValues("email"))
         pusherClient.unsubscribe(getValues("email"))
       }
       pusherClient.unbind("recover:completed", recoverCompletedHandler)
     }
-  }, [isRecoverCompleted, router])
+  }, [getValues, isRecoverCompleted, router])
 
   async function signInWithPassword(emailOrUsername: string, password: string) {
     //Check user wants login with email or username
@@ -119,19 +119,23 @@ export function AuthModal({ label }: AdminModalProps) {
           email: emailOrUsername,
           password: password,
         })
-        if (signInError) {
-          const error_description = encodeURIComponent(signInError.message)
-          router.push(`/error?error_description=${error_description}`)
-        }
+        if (signInError) throw signInError
 
         if (user.user) {
           //store info somewhere (e.g in localStorage with zustand)
-          displayResponseMessage(<p className="text-success">You are logged in</p>)
           reset()
-          router.refresh()
+
+          displayResponseMessage(
+            <div className="text-success flex flex-col justify-center items-center">
+              You are logged in - you may close this modal
+              <Timer label="I close this modal in" seconds={5} action={() => router.replace("/")} />
+            </div>,
+          )
         }
-      } catch (error: unknown) {
-        if (error instanceof Error) {
+      } catch (error) {
+        if (error instanceof Error && error.message === "Invalid login credentials") {
+          displayResponseMessage(<p className="text-danger">Wrong email or password</p>)
+        } else if (error instanceof Error) {
           displayResponseMessage(<p className="text-danger">{error.message}</p>)
         } else {
           displayResponseMessage(
@@ -146,36 +150,36 @@ export function AuthModal({ label }: AdminModalProps) {
       }
     } else {
       try {
-        const response = await axios
-          .post("/api/auth/login", { username: emailOrUsername } as TAPIAuthLogin)
-          .catch(error => {
-            throw new Error(error.response.data.error)
-          })
+        const response = await axios.post("/api/auth/login", { username: emailOrUsername } as TAPIAuthLogin)
 
         if (response.data.email) {
           const { data: user, error: signInError } = await supabaseClient.auth.signInWithPassword({
             email: response.data.email,
             password: password,
           })
-
           if (signInError) throw signInError
 
           if (user.user) {
             //store info somewhere (e.g in localStorage with zustand)
-            displayResponseMessage(<p className="text-success">You are logged in</p>)
             reset()
-            router.refresh()
+
+            displayResponseMessage(
+              <div className="text-success flex flex-col justify-center items-center">
+                You are logged in - you may close this modal
+                <Timer label="I close this modal in" seconds={5} action={() => router.replace("/")} />
+              </div>,
+            )
           }
         } else {
           displayResponseMessage(<p className="text-danger">No user with this username</p>)
         }
       } catch (error) {
-        if (error instanceof Error) {
-          if (error.message === "Invalid login credentials") {
-            displayResponseMessage(<p className="text-danger">Wrong email or password</p>)
-          } else {
-            displayResponseMessage(<p className="text-danger">{error.message}</p>)
-          }
+        if (error instanceof Error && error.message === "Invalid login credentials") {
+          displayResponseMessage(<p className="text-danger">Wrong email or password</p>)
+        } else if (error instanceof AxiosError) {
+          displayResponseMessage(<p className="text-danger">{error.response?.data.error}</p>)
+        } else if (error instanceof Error) {
+          displayResponseMessage(<p className="text-danger">{error.message}</p>)
         } else {
           displayResponseMessage(
             <div className="text-danger flex flex-row">
@@ -192,15 +196,11 @@ export function AuthModal({ label }: AdminModalProps) {
 
   async function signUp(username: string, email: string, password: string) {
     try {
-      const signUpResponse = await axios
-        .post("/api/auth/register", {
-          username: username,
-          email: email,
-          password: password,
-        } as TAPIAuthRegister)
-        .catch(error => {
-          throw new Error(error.response.data.error)
-        })
+      const signUpResponse = await axios.post("/api/auth/register", {
+        username: username,
+        email: email,
+        password: password,
+      } as TAPIAuthRegister)
 
       if (
         signUpResponse.data.error ===
@@ -227,18 +227,11 @@ export function AuthModal({ label }: AdminModalProps) {
         )
       }, 5000)
     } catch (error) {
+      if (error instanceof AxiosError) {
+        displayResponseMessage(error.response?.data.error)
+      }
       if (error instanceof Error) {
-        if (error.message === "User exists - check your email\n You might not verified your email") {
-          displayResponseMessage(
-            <p className="text-danger">
-              User exists - check your email
-              <br />
-              You might not verified your email
-            </p>,
-          )
-        } else {
-          displayResponseMessage(<p className="text-danger">{error.message}</p>)
-        }
+        displayResponseMessage(<p className="text-danger">{error.message}</p>)
       } else {
         displayResponseMessage(
           <div className="text-danger flex flex-row">
@@ -254,11 +247,12 @@ export function AuthModal({ label }: AdminModalProps) {
 
   async function resendVerificationEmail(email: string) {
     try {
-      const { error } = await supabaseClient.auth.resend({
+      const { error: resendError } = await supabaseClient.auth.resend({
         type: "signup",
         email: email,
       })
-      if (error) throw error
+      if (resendError) throw resendError
+
       displayResponseMessage(
         <div className="flex flex-col">
           <div className="text-success flex flex-row justify-center">
@@ -301,10 +295,11 @@ export function AuthModal({ label }: AdminModalProps) {
         redirectTo: `${location.origin}/auth/recover`,
       })
       if (error) throw error
+
       if (getValues("email")) {
-        console.log(298, "pusherClient.subscribe(emailInputRef.current?.value) - ", getValues("email"))
         pusherClient.subscribe(getValues("email"))
       }
+
       displayResponseMessage(<p className="text-success">Check your email</p>)
     } catch (error) {
       if (error instanceof Error) {
@@ -324,29 +319,24 @@ export function AuthModal({ label }: AdminModalProps) {
 
   async function resetPassword(password: string) {
     try {
-      // IMP - check in closed databases for this password (enterprice)
-      const response = await axios
-        .post("api/auth/recover", {
-          email: getCookie("email"),
-          password: password,
-        } as TAPIAuthRecover)
-        .catch(error => {
-          throw error
-        })
+      // IMP - check in open and closed databases for this password (enterprice)
+      const response = await axios.post("api/auth/recover", {
+        email: getCookie("email"),
+        password: password,
+      } as TAPIAuthRecover)
+
+      //TODO - set data in store (userStore.setUser()) - and set data from response
 
       displayResponseMessage(
         <div className="text-success flex flex-col justify-center items-center">
           Your password changed - you may close this window
-          <Timer label="I close this modal in" seconds={7} />
+          <Timer label="I close this modal in" seconds={7} action={() => router.replace("/")} />
         </div>,
       )
-
-      setTimeout(() => {
-        router.replace("/")
-      }, 7000)
     } catch (error) {
-      if (error instanceof Error && error.message === "New password should be different from the old password.") {
-        displayResponseMessage(<p className="text-danger">Its already your password - enter new one</p>)
+      //This is required to show custom error message (check api/dev_readme.md)
+      if (error instanceof AxiosError) {
+        displayResponseMessage(<p className="text-danger">{error.response?.data.error}</p>)
       } else if (error instanceof Error) {
         displayResponseMessage(<p className="text-danger">{error.message}</p>)
       } else {
@@ -381,7 +371,7 @@ export function AuthModal({ label }: AdminModalProps) {
     <ModalQueryContainer
       className={twMerge(
         `w-[500px] transition-all duration-300`,
-        queryParams === "login" ? "h-[550px]" : queryParams === "register" ? "h-[625px]" : "h-[325px]",
+        queryParams === "login" ? "h-[585px]" : queryParams === "register" ? "h-[625px]" : "h-[350px]",
 
         //for login height when errors
         queryParams === "login" && (errors.emailOrUsername || errors.password) && "!h-[610px]",
@@ -390,9 +380,9 @@ export function AuthModal({ label }: AdminModalProps) {
         queryParams === "register" && (errors.email || errors.password) && "!h-[720px]",
 
         //for recover height when errors
-        queryParams === "recover" && errors.password && "!h-[350px]",
+        queryParams === "recover" && errors.email && "!h-[380px]",
 
-        //for recover height when errors
+        //for resetPassword height when errors
         queryParams === "resetPassword" && errors.password && "!h-[370px]",
 
         //for auth completed height

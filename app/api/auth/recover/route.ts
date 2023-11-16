@@ -12,15 +12,18 @@ export async function POST(req: Request) {
 
   try {
     const { data, error } = await supabaseServer().auth.updateUser({ password: body.password })
-    console.log(40, "error - ", error)
-    if (error) throw error
+    if (error) {
+      if (error.message === "New password should be different from the old password.") {
+        throw new Error("Its already your password - enter new one")
+      }
+      throw new Error(error.message)
+    }
 
-    console.log(`pusherServer.trigger(${body.email}, "recover:completed", "")`)
     pusherServer.trigger(body.email, "recover:completed", "")
     return NextResponse.json({ user: data.user })
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof Error) {
-      return NextResponse.json({ error: error.message })
+      return NextResponse.json({ error: error.message }, { status: 400 })
     }
   }
 }

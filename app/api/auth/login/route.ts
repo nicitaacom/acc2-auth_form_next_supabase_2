@@ -20,7 +20,9 @@ export async function POST(req: Request) {
       throw new Error(`Error selecting email with this username ${emailSelectError}`)
     }
     return NextResponse.json({ email: email_response })
-  } catch (error) {
-    return NextResponse.json({ error: error })
+  } catch (error: any) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
   }
 }
