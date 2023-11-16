@@ -4,12 +4,13 @@ import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { usePathname, useSearchParams } from "next/navigation"
 
-import { TAPIAuthRegister } from "@/api/auth/register/route"
 import { useForm } from "react-hook-form"
 import { AiOutlineUser, AiOutlineMail, AiOutlineLock } from "react-icons/ai"
 import supabaseClient from "@/libs/supabaseClient"
 import axios from "axios"
 
+import { TAPIAuthRegister } from "@/api/auth/register/route"
+import useDarkMode from "@/store/ui/darkModeStore"
 import FormInput from "../../components/ui/Inputs/Validation/FormInput"
 import ContinueWithButton from "@/(auth)/components/ContinueWithButton"
 import { Button, Checkbox, ModalQueryContainer } from "../../components/ui"
@@ -35,15 +36,17 @@ interface FormData {
 
 export function AuthModal({ label }: AdminModalProps) {
   const router = useRouter()
-
   // const emailInputRef = useRef<HTMLInputElement>(null)
   const pathname = usePathname()
   const queryParams = useSearchParams().get("variant")
+  const darkMode = useDarkMode()
+
   const [isChecked, setIsChecked] = useState(false)
   const [isEmailSent, setIsEmailSent] = useState(false)
   const [isAuthCompleted, setIsAuthCompleted] = useState(false)
   const [isRecoverCompleted, setIsRecoverCompleted] = useState(false)
   const [responseMessage, setResponseMessage] = useState<React.ReactNode>(<p></p>)
+
   //for case when user click 'Forgot password?' or 'Create account' and some data in responseMessage
   useEffect(() => {
     setResponseMessage(<p></p>)
@@ -377,7 +380,7 @@ export function AuthModal({ label }: AdminModalProps) {
   return (
     <ModalQueryContainer
       className={twMerge(
-        `w-[500px] transition-all duration-500`,
+        `w-[500px] transition-all duration-300`,
         queryParams === "login" ? "h-[550px]" : queryParams === "register" ? "h-[625px]" : "h-[325px]",
 
         //for login height when errors
@@ -398,7 +401,7 @@ export function AuthModal({ label }: AdminModalProps) {
       modalQuery="AuthModal">
       <div className="flex flex-col justify-center gap-y-2 w-[90%] mx-auto">
         <div className="flex flex-row gap-x-4 items-center h-[100px]">
-          <Image className="w-[30px] h-[40px]" src="/big-dark.png" alt="logo" width={80} height={100} />
+          <Image src={darkMode.isDarkMode ? "/logo-dark.png" : "/logo-light.png"} alt="logo" width={40} height={57} />
           <h1 className="text-4xl font-bold">
             {queryParams === "login"
               ? "Login"
