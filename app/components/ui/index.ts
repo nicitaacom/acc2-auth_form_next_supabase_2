@@ -1,5 +1,5 @@
 import { Button } from "./Button"
 import { Checkbox } from "./Checkbox"
-import { ModalContainer } from "./ModalContainer"
+import { ModalQueryContainer } from "./ModalQueryContainer"
 
-export { Button, Checkbox, ModalContainer }
+export { Button, Checkbox, ModalQueryContainer }

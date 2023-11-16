@@ -12,7 +12,7 @@ import axios from "axios"
 
 import FormInput from "../../components/ui/Inputs/Validation/FormInput"
 import ContinueWithButton from "@/(auth)/components/ContinueWithButton"
-import { Button, Checkbox, ModalContainer } from "../../components/ui"
+import { Button, Checkbox, ModalQueryContainer } from "../../components/ui"
 import { Timer } from "@/(auth)/components"
 import { twMerge } from "tailwind-merge"
 import { pusherClient } from "@/libs/pusher"
@@ -36,7 +36,7 @@ interface FormData {
 export function AuthModal({ label }: AdminModalProps) {
   const router = useRouter()
 
-  const emailInputRef = useRef<HTMLInputElement>(null)
+  // const emailInputRef = useRef<HTMLInputElement>(null)
   const pathname = usePathname()
   const queryParams = useSearchParams().get("variant")
   const [isChecked, setIsChecked] = useState(false)
@@ -55,12 +55,13 @@ export function AuthModal({ label }: AdminModalProps) {
     formState: { errors, isSubmitting },
     reset,
     trigger,
+    getValues,
   } = useForm<FormData>()
 
-  const { ref, ...restEmail } = register("email")
-  const { ...restemailOrUsername } = register("emailOrUsername")
-  const { ...restPassword } = register("password")
-  const { ...restUsername } = register("username")
+  // const { ref, ...restEmail } = register("email")
+  // const { ...restemailOrUsername } = register("emailOrUsername")
+  // const { ...restPassword } = register("password")
+  // const { ...restUsername } = register("username")
 
   //when user submit form and got response message from server
   function displayResponseMessage(message: React.ReactNode) {
@@ -80,8 +81,8 @@ export function AuthModal({ label }: AdminModalProps) {
 
     pusherClient.bind("auth:completed", authCompletedHandler)
     return () => {
-      if (emailInputRef.current?.value) {
-        pusherClient.unsubscribe(emailInputRef.current?.value)
+      if (getValues("email")) {
+        pusherClient.unsubscribe(getValues("email"))
       }
       pusherClient.unbind("auth:completed", authCompletedHandler)
     }
@@ -91,16 +92,16 @@ export function AuthModal({ label }: AdminModalProps) {
   useEffect(() => {
     if (isRecoverCompleted) router.push("?modal=AuthModal&variant=recoverCompleted")
 
-    console.log(93, "emailInputRef.current?.value - ", emailInputRef.current?.value)
+    console.log(93, "emailInputRef.current?.value - ", getValues("email"))
     function recoverCompletedHandler() {
       setIsRecoverCompleted(true)
       console.log(96, "pusher subscribe isRecoverCompleted - ", isRecoverCompleted)
     }
     pusherClient.bind("recover:completed", recoverCompletedHandler)
     return () => {
-      if (emailInputRef.current?.value) {
-        console.log(101, "pusher unsubscribe value - ", emailInputRef.current?.value)
-        pusherClient.unsubscribe(emailInputRef.current?.value)
+      if (getValues("email")) {
+        console.log(101, "pusher unsubscribe value - ", getValues("email"))
+        pusherClient.unsubscribe(getValues("email"))
       }
       pusherClient.unbind("recover:completed", recoverCompletedHandler)
     }
@@ -206,8 +207,8 @@ export function AuthModal({ label }: AdminModalProps) {
       }
 
       setIsEmailSent(true)
-      if (emailInputRef.current) {
-        pusherClient.subscribe(emailInputRef.current?.value)
+      if (getValues("email")) {
+        pusherClient.subscribe(getValues("email"))
       }
       setResponseMessage(<p className="text-success">Check your email</p>)
       setTimeout(() => {
@@ -297,9 +298,9 @@ export function AuthModal({ label }: AdminModalProps) {
         redirectTo: `${location.origin}/auth/recover`,
       })
       if (error) throw error
-      if (emailInputRef.current) {
-        console.log(298, "pusherClient.subscribe(emailInputRef.current?.value) - ", emailInputRef.current?.value)
-        pusherClient.subscribe(emailInputRef.current?.value)
+      if (getValues("email")) {
+        console.log(298, "pusherClient.subscribe(emailInputRef.current?.value) - ", getValues("email"))
+        pusherClient.subscribe(getValues("email"))
       }
       displayResponseMessage(<p className="text-success">Check your email</p>)
     } catch (error) {
@@ -374,7 +375,7 @@ export function AuthModal({ label }: AdminModalProps) {
   }
 
   return (
-    <ModalContainer
+    <ModalQueryContainer
       className={twMerge(
         `w-[500px] transition-all duration-500`,
         queryParams === "login" ? "h-[550px]" : queryParams === "register" ? "h-[625px]" : "h-[325px]",
@@ -421,7 +422,6 @@ export function AuthModal({ label }: AdminModalProps) {
               onSubmit={handleSubmit(onSubmit)}>
               {queryParams !== "login" && queryParams !== "resetPassword" && (
                 <FormInput
-                  {...restEmail}
                   endIcon={<AiOutlineMail size={24} />}
                   register={register}
                   errors={errors}
@@ -429,17 +429,11 @@ export function AuthModal({ label }: AdminModalProps) {
                   label="Email"
                   placeholder="user@big.com"
                   disabled={isSubmitting || isEmailSent}
-                  ref={e => {
-                    ref(e)
-                    //@ts-ignore
-                    emailInputRef.current = e // you can still assign to ref
-                  }}
                   required
                 />
               )}
               {queryParams === "login" && (
                 <FormInput
-                  {...restemailOrUsername}
                   endIcon={<AiOutlineUser size={24} />}
                   register={register}
                   errors={errors}
@@ -452,7 +446,6 @@ export function AuthModal({ label }: AdminModalProps) {
               )}
               {queryParams !== "recover" && (
                 <FormInput
-                  {...restPassword}
                   endIcon={<AiOutlineLock size={24} />}
                   register={register}
                   errors={errors}
@@ -470,7 +463,6 @@ export function AuthModal({ label }: AdminModalProps) {
               )}
               {queryParams === "register" && (
                 <FormInput
-                  {...restUsername}
                   endIcon={<AiOutlineUser size={24} />}
                   register={register}
                   errors={errors}
@@ -552,6 +544,6 @@ export function AuthModal({ label }: AdminModalProps) {
           </h1>
         )}
       </div>
-    </ModalContainer>
+    </ModalQueryContainer>
   )
 }
