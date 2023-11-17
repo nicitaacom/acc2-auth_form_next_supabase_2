@@ -21,7 +21,7 @@ export async function POST(req: Request) {
 
     pusherServer.trigger(body.email, "recover:completed", "")
     return NextResponse.json({ user: data.user })
-  } catch (error: any) {
+  } catch (error) {
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
