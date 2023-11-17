@@ -17,13 +17,14 @@ export async function POST(req: Request) {
       .single()
     const email = email_response?.email
 
+    if (!email) {
+      throw new Error("User with this email doesn't exist")
+    }
     if (emailSelectError) {
       console.log(22, "emailSelectError \n", emailSelectError)
       throw emailSelectError
     }
-    if (!email) {
-      throw new Error("User with this email doesn't exist")
-    }
+
     const { data: provider_response } = await supabaseAdmin
       .from("users")
       .select("providers")
