@@ -1,6 +1,6 @@
 "use client"
 import Image from "next/image"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { usePathname, useSearchParams } from "next/navigation"
 
@@ -20,8 +20,6 @@ import { pusherClient } from "@/libs/pusher"
 import { TAPIAuthLogin } from "@/api/auth/login/route"
 import { getCookie } from "@/utils/helpersCSR"
 import { TAPIAuthRecover } from "../../api/auth/recover/route"
-
-//TODO - its trash code - reduce line amount of line
 
 interface AdminModalProps {
   label: string
