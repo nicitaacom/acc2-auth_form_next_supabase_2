@@ -1,4 +1,4 @@
-import ContinueWithButton from "./ContinueWithButton"
+import { ContinueWithButton } from "./ContinueWithButton"
 import LogoutButton from "./LogoutButton"
 import { Timer } from "./Timer"
 

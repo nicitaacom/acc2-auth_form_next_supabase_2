@@ -83,5 +83,5 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${requestUrl.origin}/error?error_description=${error_description}`)
     }
   }
-  return NextResponse.redirect(`${getURL()}/auth/callback`)
+  return NextResponse.redirect(`${getURL()}/auth/callback/completed?provider=${provider}`)
 }

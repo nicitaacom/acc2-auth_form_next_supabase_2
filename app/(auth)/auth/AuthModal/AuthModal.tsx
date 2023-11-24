@@ -10,16 +10,16 @@ import supabaseClient from "@/libs/supabaseClient"
 import axios, { AxiosError } from "axios"
 
 import { TAPIAuthRegister } from "@/api/auth/register/route"
+import { TAPIAuthRecover } from "../../../api/auth/recover/route"
 import useDarkMode from "@/store/ui/darkModeStore"
-import { FormInput } from "../../components/ui/Inputs/Validation/FormInput"
-import ContinueWithButton from "@/(auth)/components/ContinueWithButton"
-import { Button, Checkbox, ModalQueryContainer } from "../../components/ui"
-import { Timer } from "@/(auth)/components"
+import { FormInput } from "../../../components/ui/Inputs/Validation/FormInput"
+import { ContinueWithButton } from "@/(auth)/auth/AuthModal/components/ContinueWithButton"
+import { Button, Checkbox, ModalQueryContainer } from "../../../components/ui"
+import { Timer } from "@/(auth)/auth/AuthModal/components"
 import { twMerge } from "tailwind-merge"
 import { pusherClient } from "@/libs/pusher"
 import { TAPIAuthLogin } from "@/api/auth/login/route"
 import { getCookie } from "@/utils/helpersCSR"
-import { TAPIAuthRecover } from "../../api/auth/recover/route"
 
 interface AdminModalProps {
   label: string
@@ -276,7 +276,7 @@ export function AuthModal({ label }: AdminModalProps) {
   async function recoverPassword(email: string) {
     try {
       const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-        redirectTo: `${location.origin}/auth/recover`,
+        redirectTo: `${location.origin}/auth/callback/recover`,
       })
       if (error) throw error
 
