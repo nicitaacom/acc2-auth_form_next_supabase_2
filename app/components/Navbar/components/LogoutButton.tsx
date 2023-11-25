@@ -1,8 +1,10 @@
 "use client"
-import { Button } from "@/components/ui"
+
 import supabaseClient from "@/libs/supabaseClient"
-import useUserStore from "@/store/user/userStore"
 import { useRouter } from "next/navigation"
+
+import { Button } from "@/components/ui"
+import useUserStore from "@/store/user/userStore"
 
 export function LogoutButton() {
   const router = useRouter()
@@ -10,8 +12,8 @@ export function LogoutButton() {
 
   async function logout() {
     await supabaseClient.auth.signOut()
-    router.refresh()
     userStore.logoutUser()
+    router.refresh()
   }
 
   return <Button onClick={logout}>Logout</Button>
