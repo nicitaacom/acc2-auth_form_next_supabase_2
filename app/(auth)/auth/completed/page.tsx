@@ -9,16 +9,16 @@ export default function AuthCompleted() {
   const params = useSearchParams().get("code")
   const provider = useSearchParams().get("provider")
 
-  if (!params) {
-    const error_description = encodeURIComponent("auth not completed")
-    router.push(`/error?error=${error_description}`)
-  }
-
   useEffect(() => {
-    if (provider === "google" || provider === "twitter") router.push("/")
+    if (provider === "google" || provider === "twitter") return router.replace("/")
     //to prevent error about too many re-renders
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  if (!params) {
+    const error_description = encodeURIComponent("auth not completed")
+    return router.push(`/error?error=${error_description}`)
+  }
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center">
