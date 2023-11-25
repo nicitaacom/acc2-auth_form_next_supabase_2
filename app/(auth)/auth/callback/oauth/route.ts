@@ -78,10 +78,17 @@ export async function GET(request: Request) {
             .eq("id", response.data.user.id)
         }
       }
+      return NextResponse.redirect(
+        `${requestUrl.origin}auth/completed?code=${code}&provider=${provider}&userId=${response?.data.user
+          .id}&username=${response.data.user.user_metadata.name}&email=${response.data.user.email}&avatarUrl=${
+          response.data.user.user_metadata.avatar_url ||
+          response.data.user?.identities![0]?.identity_data?.avatar_url ||
+          response.data.user?.identities![1]?.identity_data?.avatar_url
+        }`,
+      )
     } else {
       const error_description = encodeURIComponent("No user found after exchanging cookies for registration")
       return NextResponse.redirect(`${requestUrl.origin}/error?error_description=${error_description}`)
     }
   }
-  return NextResponse.redirect(`${requestUrl.origin}/auth/completed?provider=${provider}`)
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { Timer } from "@/(auth)/auth/AuthModal/components"
+import useUserStore from "@/store/user/userStore"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect } from "react"
 
@@ -9,7 +10,15 @@ export default function AuthCompleted() {
   const params = useSearchParams().get("code")
   const provider = useSearchParams().get("provider")
 
+  const userStore = useUserStore()
+
+  const userId = useSearchParams()?.get("userId")
+  const username = useSearchParams()?.get("username")
+  const email = useSearchParams()?.get("email")
+  const avatarUrl = useSearchParams()?.get("avatarUrl")
+
   useEffect(() => {
+    userStore.setUser(userId ?? "", username ?? "", email ?? "", avatarUrl ?? "")
     if (provider === "google" || provider === "twitter") return router.replace("/")
     //to prevent error about too many re-renders
     // eslint-disable-next-line react-hooks/exhaustive-deps
