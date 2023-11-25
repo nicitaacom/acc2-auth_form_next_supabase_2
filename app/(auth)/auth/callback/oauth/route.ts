@@ -79,7 +79,7 @@ export async function GET(request: Request) {
         }
       }
       return NextResponse.redirect(
-        `${requestUrl.origin}auth/completed?code=${code}&provider=${provider}&userId=${response?.data.user
+        `${requestUrl.origin}/auth/completed?code=${code}&provider=${provider}&userId=${response?.data.user
           .id}&username=${response.data.user.user_metadata.name}&email=${response.data.user.email}&avatarUrl=${
           response.data.user.user_metadata.avatar_url ||
           response.data.user?.identities![0]?.identity_data?.avatar_url ||
