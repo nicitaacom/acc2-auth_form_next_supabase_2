@@ -1,4 +1,5 @@
-import { Button } from "@/components/ui"
+"use client"
+
 import Image from "next/image"
 
 import { BiUserCircle } from "react-icons/bi"
@@ -36,7 +37,7 @@ export default function UserIcon({ user }: UserIconProps) {
       ) : (
         <BiUserCircle className="cursor-pointer" size={32} />
       )}
-      {JSON.stringify(email, null, 2)}
+      {email && JSON.stringify(email, null, 2)}
       {user && <LogoutButton />}
     </div>
   )
