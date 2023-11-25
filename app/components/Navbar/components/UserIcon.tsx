@@ -4,19 +4,22 @@ import Image from "next/image"
 import { BiUserCircle } from "react-icons/bi"
 import { LogoutButton } from "./LogoutButton"
 import { TUser } from "@/interfaces/IUser"
+import useUserStore from "@/store/user/userStore"
 
 interface UserIconProps {
   user: TUser
 }
 
 export default function UserIcon({ user }: UserIconProps) {
+  const { avatarUrl, email } = useUserStore()
+
   return (
     <div className="flex flex-col gap-y-2 justify-center items-center">
       {user ? (
-        user.avatar_url ? (
+        avatarUrl ? (
           <Image
             className="rounded-full cursor-pointer"
-            src={user.avatar_url}
+            src={avatarUrl}
             alt="profile_picture_url"
             width={32}
             height={32}
@@ -33,7 +36,7 @@ export default function UserIcon({ user }: UserIconProps) {
       ) : (
         <BiUserCircle className="cursor-pointer" size={32} />
       )}
-      {JSON.stringify(user?.email, null, 2)}
+      {JSON.stringify(email, null, 2)}
       {user && <LogoutButton />}
     </div>
   )
