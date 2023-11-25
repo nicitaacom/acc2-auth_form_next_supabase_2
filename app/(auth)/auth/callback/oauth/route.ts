@@ -1,5 +1,4 @@
 import supabaseAdmin from "@/libs/supabaseAdmin"
-import { getURL } from "@/utils/helpers"
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
@@ -33,7 +32,9 @@ export async function GET(request: Request) {
         email: response.data.user.email,
         email_confirmed_at: response.data.user.email_confirmed_at,
         avatar_url:
-          response.data.user.user_metadata.avatar_url || response.data.user?.identities![0]?.identity_data?.avatar_url,
+          response.data.user.user_metadata.avatar_url ||
+          response.data.user?.identities![0]?.identity_data?.avatar_url ||
+          response.data.user?.identities![1]?.identity_data?.avatar_url,
         providers: [provider!],
       })
       // If row already exist - do 4 and 5
@@ -77,6 +78,9 @@ export async function GET(request: Request) {
             })
             .eq("id", response.data.user.id)
         }
+      } else {
+        // If row doesn't exist - this user login with OAuth first time so he haven't rows in other tables
+        await supabaseAdmin.from("users_cart").insert({ id: response.data.user.id })
       }
       return NextResponse.redirect(
         `${requestUrl.origin}/auth/completed?code=${code}&provider=${provider}&userId=${response?.data.user
@@ -90,5 +94,9 @@ export async function GET(request: Request) {
       const error_description = encodeURIComponent("No user found after exchanging cookies for registration")
       return NextResponse.redirect(`${requestUrl.origin}/error?error_description=${error_description}`)
     }
+  } else {
+    // TODO - create image on error page for this case
+    const error_description = encodeURIComponent("No code found to exchange cookies for session")
+    return NextResponse.redirect(`${requestUrl.origin}/error?error_description=${error_description}`)
   }
 }
