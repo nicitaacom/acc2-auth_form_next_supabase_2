@@ -25,6 +25,14 @@ export async function GET(request: Request) {
     const response = await supabase.auth.exchangeCodeForSession(code)
 
     if (response.data.user && response.data.user.email) {
+      const user_id = response?.data.user.id
+      const username = response.data.user.user_metadata.name
+      const email = response.data.user.email
+      const avatarUrl =
+        response.data.user.user_metadata.avatar_url ||
+        response.data.user?.identities![0]?.identity_data?.avatar_url ||
+        response.data.user?.identities![1]?.identity_data?.avatar_url
+
       // 3. Insert row if user doesn't exist
       const { error: is_row_exist } = await supabaseAdmin.from("users").insert({
         id: response.data.user.id,
@@ -64,6 +72,7 @@ export async function GET(request: Request) {
           .single()
 
         if (select_avatar_url_error) throw select_avatar_url_error
+
         if (!avatar_url_reponse?.avatar_url) {
           await supabaseAdmin
             .from("users")
@@ -77,13 +86,14 @@ export async function GET(request: Request) {
             .eq("id", response.data.user.id)
         }
       }
+
       return NextResponse.redirect(
-        `${requestUrl.origin}/auth/completed?code=${code}&provider=${provider}&userId=${response?.data.user
-          .id}&username=${response.data.user.user_metadata.name}&email=${response.data.user.email}&avatarUrl=${
-          response.data.user.user_metadata.avatar_url ||
-          response.data.user?.identities![0]?.identity_data?.avatar_url ||
-          response.data.user?.identities![1]?.identity_data?.avatar_url
-        }`,
+        `${requestUrl.origin}/auth/completed?code=${code}
+        &provider=credentials
+        &userId=${user_id}
+        &username=${username}
+        &email=${email}
+        &avatarUrl=${avatarUrl}`,
       )
     } else {
       const error_description = encodeURIComponent("No user found after exchanging cookies for registration")
