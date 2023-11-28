@@ -31,12 +31,28 @@ export async function GET(request: Request) {
         .eq("id", response.data.user.id)
       // Trigger pusher to 'auth:completed' to show in another tab message like 'Authencication completed - thank you'
       pusherServer.trigger(response.data.user.email, "auth:completed", response.data.user)
-      revalidatePath("/")
+
+      // Get username to set it in localstorage
+      const { data: username_response } = await supabaseAdmin
+        .from("users")
+        .select("username")
+        .eq("id", response?.data.user.id)
+        .single()
+
+      const user_id = response?.data.user.id
+      const username = response.data.user.user_metadata.name || username_response?.username
+      const email = response.data.user.email
+      const avatarUrl =
+        response.data.user.user_metadata.avatar_url ||
+        response.data.user?.identities![0]?.identity_data?.avatar_url ||
+        response.data.user?.identities![1]?.identity_data?.avatar_url
+
+      return NextResponse.redirect(
+        `${requestUrl.origin}/auth/completed?code=${code}&provider=credentials&userId=${user_id}&username=${username}&email=${email}&avatarUrl=${avatarUrl}`,
+      )
     }
   } else {
     const error_description = encodeURIComponent("No user found after exchanging cookies for registration")
     return NextResponse.redirect(`${requestUrl.origin}/error?error_description=${error_description}`)
   }
-  //Todo redirect to auth/callback/page.tsx and set data in LocalStorage
-  return NextResponse.redirect(`${requestUrl.origin}/auth/completed?code=${code}`)
 }
