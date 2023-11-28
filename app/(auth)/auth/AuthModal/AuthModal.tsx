@@ -72,6 +72,7 @@ export function AuthModal({ label }: AdminModalProps) {
   useEffect(() => {
     function authCompletedHandler() {
       setIsAuthCompleted(true)
+      router.refresh()
     }
 
     pusherClient.bind("auth:completed", authCompletedHandler)
@@ -81,7 +82,7 @@ export function AuthModal({ label }: AdminModalProps) {
       }
       pusherClient.unbind("auth:completed", authCompletedHandler)
     }
-  }, [getValues])
+  }, [getValues, router])
 
   // Show 'Recover completed' if user changed password in another window
   useEffect(() => {
